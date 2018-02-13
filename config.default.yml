@@ -1,0 +1,16 @@
+debug: false
+sentTag: sent
+smtpHost: smtp.yandex.ru
+smtpPort: 587
+smtpSecure: false
+planfixAccount: tagilcity
+planfixAnaliticName: Поминутная работа программиста
+sendInterval: 60 # минут
+
+# copy above options to config.yml
+apiToken:
+workspaceId:
+smtpLogin:
+smtpPassword:
+emailFrom:
+planfixAuthorName:
