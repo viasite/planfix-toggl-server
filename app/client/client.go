@@ -2,176 +2,140 @@ package client
 
 import (
 	"github.com/jason0x43/go-toggl"
+	"fmt"
+	"math"
+	"log"
+	"net/smtp"
 )
+
+// данные не меняются при этой опции
+var testMode = false
 
 type TogglClient struct {
 	Session    toggl.Session
+	Config     {}
 }
-
-func (c TogglClient) GetEntries(t string) (string, error) {
-	return "[0,1,2]", nil
-}
-
-/*
-const nodemailer = require('nodemailer');
-const TogglClient = require('toggl-api');
-const settings = require('./settings');
-
-// данные не меняются при этой опции
-const testMode = false;
-
-// валидации всех настроек здесь нет, считается, что их уже проверили
-let user;
-const prefs = settings.getAll();
-const toggl = new TogglClient({ apiToken: prefs.apiToken });
 
 // получает записи из Toggl и отправляет в Планфикс
-async function sendToPlanfix(){
-let pendingEntries = await getPendingEntries();
-let entries = groupEntriesByTask(pendingEntries);
-entries.forEach(async (entry) => {
-let entryString = entry.description + ' (' + Math.round(entry.dur / 60000) + ')';
-try{
-await sendEntry(entry.planfix.task_id, entry);
-console.log(new Date().toISOString() + ' - entry ' + entryString + ' sent to #' + entry.planfix.task_id);
-} catch (err){
-console.log(new Date().toISOString() + ' - entry ' + entryString + ' failed');
-}
-});
-return entries;
+func (c TogglClient) SendToPlanfix() (entries){
+	fmt.Println("not implemented yet")
+
+	pendingEntries := c.GetPendingEntries()
+	entries := c.GroupEntriesByTask(pendingEntries)
+	for _, entry := range entries {
+		entryString := entry.description + " (" + math.Floor(entry.dur / 60000  + .5) + ")"
+		err := c.sendEntry(entry.planfix.task_id, entry)
+		if(err != nil) {
+			log.Println("[WARN] entry " + entryString + " failed to send")
+		} else {
+			log.Println("entry " + entryString + " sent to #" + entry.planfix.task_id)
+		}
+	}
+	return entries;
 }
 
-function groupEntriesByTask(entries){
-let grouped = {};
-entries.forEach(entry => {
-if(grouped.hasOwnProperty(entry.planfix.task_id)){
-grouped[entry.planfix.task_id].dur += entry.dur;
-grouped[entry.planfix.task_id].planfix.group_count += 1;
-} else {
-grouped[entry.planfix.task_id] = entry;
-}
-});
-return Object.values(grouped);
+func (c TogglClient) GroupEntriesByTask(entries) (grouped){
+	fmt.Println("not implemented yet")
+	grouped := {}
+	for _, entry := range entries {
+		if(grouped.hasOwnProperty(entry.planfix.task_id)){
+			grouped[entry.planfix.task_id].dur += entry.dur
+			grouped[entry.planfix.task_id].planfix.group_count += 1;
+		} else {
+			grouped[entry.planfix.task_id] = entry
+		}
+	}
+	return Object.values(grouped)
 }
 
-function getUserData(){
-return new Promise((resolve, reject) => {
-if(user){
-resolve(user);
-return;
-}
-toggl.getUserData({}, function (err, me) {
-if (err) {
-reject(err);
-return;
-}
-user = me;
-resolve(me);
-});
-});
+func (c TogglClient) GetUserData() (account){
+	account, err := c.Session.GetAccount()
+	if err != nil {
+		println("error:", err)
+	}
+	return account
 }
 
 // native toggl report
-function getReport(opts){
-return new Promise((resolve, reject) => {
-if(!opts.workspace_id){
-opts.workspace_id = prefs.workspaceId;
-}
-toggl.detailedReport(opts, function (err, report) {
-if (err) {
-reject(err);
-return;
-}
-resolve(report);
-});
-});
+func (c TogglClient) GetReport(opts) (report, err){
+	fmt.Println("not implemented yet")
+	if(!opts.workspace_id){
+		opts.workspace_id = c.Config.WorkspaceId
+	}
+	report, err := c.Session.GetDetailedReport(opts)
+	return report, err
 }
 
 // report entries with planfix data
-async function getEntries(opts){
-let report = await getReport(opts);
-return report.data.map(entry => {
-entry.planfix = {
-sent: false,
-task_id: 0,
-group_count: 1
-};
+func (c TogglClient) GetEntries(opts) (entries, error) {
+	report := c.getReport(opts);
+	entries := []
 
-entry.tags.forEach(tag => {
-// only digit == planfix.task_id
-if (tag.match(/^\d+$/)) {
-entry.planfix.task_id = parseInt(tag);
-}
-// sent tag
-if (tag === prefs.sentTag) {
-entry.planfix.sent = true;
-}
-});
+	for _, entry in range report.data{
+		entry.planfix = {
+			sent: false,
+			task_id: 0,
+			group_count: 1
+		}
 
-return entry;
-});
+		for _, tag in range entry.tags{
+			// only digit == planfix.task_id
+			if (tag.match(/^\d+$/)) {
+				entry.planfix.task_id = parseInt(tag)
+			}
+
+			// sent tag
+			if (tag == c.Config.SentTag) {
+				entry.planfix.sent = true
+			}
+		}
+	}
 }
 
-async function getPendingEntries(){
-let user = await getUserData();
-let entries = await getEntries({});
-return entries
-.filter(entry => entry.planfix.task_id != 0)
-.filter(entry => !entry.planfix.sent)
-.filter(entry => entry.uid == user.id)
+func filter(vs []string, f func(string) bool) []string {
+	vsf := make([]string, 0)
+	for _, v := range vs {
+		if f(v) {
+			vsf = append(vsf, v)
+		}
+	}
+	return vsf
+}
+
+func (c TogglClient) GetPendingEntries() (entries){
+	user := c.GetUserData()
+	entries := c.GetEntries({})
+	entries = filter(entries, func(entry){ return entry.planfix.task_id != 0 })
+	entries = filter(entries, func(entry){ return !entry.planfix.sent })
+	entries = filter(entries, func(entry){ return entry.uid == user.id })
+	return entries
 }
 
 // отправка письма и пометка тегом sent в Toggl
-function sendEntry(planfixTaskId, entry) {
-return new Promise(function(resolve, reject){
-let mins = Math.round(entry.dur / 1000 / 60);
+func (c TogglClient) sendEntry(planfixTaskId, entry) (err){
+	mins := math.Floor(entry.dur / 60000  + .5);
+	if(testMode){
+		return nil
+	}
 
-let transporter = nodemailer.createTransport({
-host: prefs.smtpHost,
-port: prefs.smtpPort,
-secure: prefs.smtpSecure,
-auth: {
-user: prefs.smtpLogin,
-pass: prefs.smtpPassword
+	auth := smtp.PlainAuth("", c.Config.SmtpLogin, c.Config.SmtpPassword, c.Config.SmtpHost)
+	taskEmail := "task + " + planfixTaskId + "@" + c.Config.PlanfixAccount + ".planfix.ru"
+	to := []string{taskEmail}
+	msg := []byte("To: " + taskEmail + "\r\n" +
+		"Subject: @toggl @nonotify\r\n" +
+		"\r\n" +
+		"Вид работы: \r\n" + c.Config.PlanfixAnaliticName + "\r\n" +
+		"time: \r\n" + mins + "\r\n" +
+		"Автор: \r\n" + c.Config.PlanfixAuthorName + "\r\n" +
+		"Дата:" + entry.start[0:10] + "\r\n")
+	err := smtp.SendMail(c.Config.SmtpHost + ":" + c.Config.SmtpPort, auth, c.Config.EmailFrom, to, msg)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("entry [" + entry.project + "] " + entry.description + " (" + mins + ") sent to Planfix")
+
+	if _, err := c.Session.AddRemoveTag(entry.id, c.Config.SentTag, true); err != nil {
+		log.Fatal(err)
+		return err
+	}
 }
-});
-
-// setup email data with unicode symbols
-let mailOptions = {
-from: prefs.emailFrom,
-to: 'task+' + planfixTaskId + '@' + prefs.planfixAccount + '.planfix.ru',
-subject: '@toggl @nonotify',
-text:
-'Вид работы: ' + prefs.planfixAnaliticName + '\n' +
-'time:' + mins + '\n' +
-'Автор: ' + prefs.planfixAuthorName + '\n' +
-'Дата: ' + entry.start.substring(0, 10)
-};
-
-if(testMode){
-resolve(entry);
-return;
-}
-
-transporter.sendMail(mailOptions, function(err, info){
-if (err) {
-reject(err);
-return;
-}
-console.log(new Date().toISOString() + ' - entry [' + entry.project + '] "' + entry.description + '" (' + mins + ') sent to Planfix');
-
-toggl.updateTimeEntriesTags([entry.id], [prefs.sentTag], 'add', function (err, timeEntries) {
-if (err !== null) {
-reject(err);
-return;
-}
-resolve(entry);
-});
-});
-});
-}
-
-module.exports.getEntries = getEntries;
-module.exports.getPendingEntries = getPendingEntries;
-module.exports.groupEntriesByTask = groupEntriesByTask;
-module.exports.sendToPlanfix = sendToPlanfix;*/

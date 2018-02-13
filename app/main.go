@@ -33,27 +33,17 @@ func main() {
 	configor.Load(&Config, "config.yml", "config.default.yml")
 	fmt.Printf("planfix-toggl %s\n", revision)
 
-	os.Exit(0)
-	sess := toggl.OpenSession("")
+	if (Config.SmtpSecure){
+		err := "[ERR] Secure SMTP not implemented"
+		log.Fatal(err)
+		os.Exit(1)
+	}
+
+	sess := toggl.OpenSession(Config.ApiToken)
 	TogglClient := client.TogglClient{
 		Session: sess,
+		Config: Config,
 	}
-	/*sess := toggl.OpenSession("6bf19c7924f843c7ef870ed27f368ef8")
-	account, err := sess.GetAccount()
-	if err != nil {
-		println("error:", err)
-		return
-	}
-	data, err := json.MarshalIndent(&account, "", "    ")
-	println("account:", string(data))
-
-	report, err := sess.GetSummaryReport(308899, "2018-02-12", "2018-02-13")
-	if err != nil {
-		println("error:", err)
-		return
-	}
-	reportJson, err := json.MarshalIndent(&report, "", "    ")
-	println("report:", string(reportJson))*/
 
 	log.SetFlags(log.Ldate | log.Ltime)
 	if Config.Debug {
