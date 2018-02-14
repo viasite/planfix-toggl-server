@@ -6,6 +6,7 @@ import (
 	"math"
 	"log"
 	"net/smtp"
+	"github.com/viasite/planfix-toggl-server/app/config"
 )
 
 // данные не меняются при этой опции
@@ -13,7 +14,7 @@ var testMode = false
 
 type TogglClient struct {
 	Session    toggl.Session
-	Config     {}
+	Config     config.Config
 }
 
 // получает записи из Toggl и отправляет в Планфикс
@@ -128,7 +129,7 @@ func (c TogglClient) sendEntry(planfixTaskId, entry) (err){
 		"time: \r\n" + mins + "\r\n" +
 		"Автор: \r\n" + c.Config.PlanfixAuthorName + "\r\n" +
 		"Дата:" + entry.start[0:10] + "\r\n")
-	err := smtp.SendMail(c.Config.SmtpHost + ":" + c.Config.SmtpPort, auth, c.Config.EmailFrom, to, msg)
+	err := smtp.SendMail(fmt.Sprintf("%s:%d", c.Config.SmtpHost, c.Config.SmtpPort), auth, c.Config.EmailFrom, to, msg)
 	if err != nil {
 		log.Fatal(err)
 	}

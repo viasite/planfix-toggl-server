@@ -11,12 +11,14 @@ import (
 	"github.com/go-chi/render"
 
 	"github.com/viasite/planfix-toggl-server/app/client"
+	"github.com/viasite/planfix-toggl-server/app/config"
 )
 
 // Server is a rest with store
 type Server struct {
-	Version        string
-	TogglClient    client.TogglClient
+	Version     string
+	TogglClient client.TogglClient
+	Config      config.Config
 }
 
 //Run the lister and request's router, activate rest server
