@@ -6,7 +6,7 @@ import (
 	"log"
 
 	"github.com/viasite/planfix-toggl-server/app/config"
-	"github.com/jason0x43/go-toggl"
+	"github.com/popstas/go-toggl"
 	"github.com/viasite/planfix-toggl-server/app/client"
 	"github.com/viasite/planfix-toggl-server/app/rest"
 )

@@ -49,7 +49,7 @@ func (s Server) Run() {
 
 // GET /v1/toggl/entries
 func (s Server) getEntriesCtrl(w http.ResponseWriter, r *http.Request) {
-	entries, err := s.TogglClient.GetEntries("last")
+	entries, err := s.TogglClient.GetEntries()
 	if err != nil {
 		log.Printf("[WARN] failed to load entries")
 	} else {
