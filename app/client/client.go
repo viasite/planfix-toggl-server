@@ -27,16 +27,19 @@ type PlanfixEntryData struct {
 }
 
 type TogglPlanfixEntry struct {
-	ID          int              `json:"id,omitempty"`
-	Pid         int              `json:"pid"`
-	Uid         int              `json:"uid"`
-	Description string           `json:"description,omitempty"`
-	Project     string           `json:"project,omitempty"`
-	Tags        []string         `json:"tags"`
-	Start       *time.Time       `json:"start,omitempty"`
-	Stop        *time.Time       `json:"stop,omitempty"`
-	Duration    int64            `json:"dur,omitempty"`
-	Planfix     PlanfixEntryData `json:"planfix"`
+	ID              int              `json:"id,omitempty"`
+	Pid             int              `json:"pid"`
+	Uid             int              `json:"uid"`
+	Description     string           `json:"description,omitempty"`
+	Project         string           `json:"project"`
+	ProjectColor    string           `json:"project_color"`
+	ProjectHexColor string           `json:"project_hex_color"`
+	Client          string           `json:"clientk,omitempty"`
+	Tags            []string         `json:"tags"`
+	Start           *time.Time       `json:"start,omitempty"`
+	Stop            *time.Time       `json:"stop,omitempty"`
+	Duration        int64            `json:"dur,omitempty"`
+	Planfix         PlanfixEntryData `json:"planfix"`
 }
 
 // получает записи из Toggl и отправляет в Планфикс
@@ -109,15 +112,18 @@ func (c TogglClient) GetEntries() (entries []TogglPlanfixEntry, err error) {
 	for _, entry := range report.Data {
 
 		pfe := TogglPlanfixEntry{
-			ID:          entry.ID,
-			Pid:         entry.Pid,
-			Uid:         entry.Uid,
-			Description: entry.Description,
-			Project:     entry.Project,
-			Tags:        entry.Tags,
-			Start:       entry.Start,
-			Stop:        entry.End,
-			Duration:    entry.Duration,
+			ID:              entry.ID,
+			Pid:             entry.Pid,
+			Uid:             entry.Uid,
+			Description:     entry.Description,
+			Project:         entry.Project,
+			ProjectColor:    entry.ProjectColor,
+			ProjectHexColor: entry.ProjectHexColor,
+			Client:          entry.Client,
+			Tags:            entry.Tags,
+			Start:           entry.Start,
+			Stop:            entry.End,
+			Duration:        entry.Duration,
 			Planfix: PlanfixEntryData{
 				Sent:       false,
 				TaskId:     0,
