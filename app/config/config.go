@@ -11,6 +11,7 @@ type Config struct {
 	SmtpSecure          bool   `env:"SMTP_SECURE" yaml:"smtpSecure"`
 	PlanfixAccount      string `env:"PLANFIX_ACCOUNT" yaml:"planfixAccount"`
 	PlanfixAnaliticName string `env:"PLANFIX_ANALITIC_NAME" yaml:"planfixAnaliticName"`
+	SendInterval        int    `env:"SEND_INTERVAL" yaml:"sendInterval"`
 	ApiToken            string `env:"API_TOKEN" yaml:"apiToken"`
 	WorkspaceId         int    `env:"WORKSPACE_ID" yaml:"workspaceId"`
 	SmtpLogin           string `env:"SMTP_LOGIN" yaml:"smtpLogin"`

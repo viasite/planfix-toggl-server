@@ -34,6 +34,10 @@ func main() {
 		log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds | log.Lshortfile)
 	}
 
+	if cfg.SendInterval > 0 {
+		go TogglClient.RunSender()
+	}
+
 	server := rest.Server{
 		Version:     revision,
 		TogglClient: TogglClient,

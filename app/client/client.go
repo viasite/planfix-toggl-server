@@ -13,7 +13,7 @@ import (
 )
 
 // данные не меняются при этой опции
-var testMode = true
+var testMode = false
 
 type TogglClient struct {
 	Session toggl.Session
@@ -42,20 +42,36 @@ type TogglPlanfixEntry struct {
 	Planfix         PlanfixEntryData `json:"planfix"`
 }
 
+func (c TogglClient) RunSender(){
+	for {
+		c.SendToPlanfix()
+		time.Sleep(time.Duration(c.Config.SendInterval) * time.Minute)
+	}
+	tick := time.Tick(5 * time.Second)
+	for _ = range tick {
+		c.SendToPlanfix()
+	}
+}
+
 // получает записи из Toggl и отправляет в Планфикс
 func (c TogglClient) SendToPlanfix() (entries []TogglPlanfixEntry, err error) {
+	log.Println("Send to Planfix:")
 	pendingEntries, err := c.GetPendingEntries()
 	if err != nil {
 		return []TogglPlanfixEntry{}, err
 	}
 	entries = c.GroupEntriesByTask(pendingEntries)
 	for _, entry := range entries {
-		entryString := fmt.Sprintf("%s (%d)", entry.Description, math.Floor(float64(entry.Duration)/60000+.5))
+		entryString := fmt.Sprintf(
+			"%s (%d)",
+			entry.Description,
+			int(math.Floor(float64(entry.Duration)/60000+.5)),
+			)
 		err := c.sendEntry(entry.Planfix.TaskId, entry)
 		if err != nil {
-			log.Println("[WARN] entry %s failed to send", entryString)
+			log.Printf("[WARN] entry %s failed to send", entryString)
 		} else {
-			log.Println("entry %s sent to #%d", entryString, entry.Planfix.TaskId)
+			log.Printf("entry %s sent to #%d", entryString, entry.Planfix.TaskId)
 		}
 	}
 	return entries, nil
@@ -166,8 +182,7 @@ func (c TogglClient) GetPendingEntries() ([]TogglPlanfixEntry, error) {
 
 // отправка письма и пометка тегом sent в Toggl
 func (c TogglClient) sendEntry(planfixTaskId int, entry TogglPlanfixEntry) (error) {
-	fmt.Println("not implemented yet")
-	mins := math.Floor(float64(entry.Duration)/60000 + .5)
+	mins := int(math.Floor(float64(entry.Duration)/60000 + .5))
 	if testMode {
 		return nil
 	}
@@ -193,7 +208,7 @@ func (c TogglClient) sendEntry(planfixTaskId int, entry TogglPlanfixEntry) (erro
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Println("entry [%s] %s (%d) sent to Planfix", entry.Project, entry.Description, mins)
+	log.Printf("entry [%s] %s (%d) sent to Planfix", entry.Project, entry.Description, mins)
 
 	if _, err := c.Session.AddRemoveTag(entry.ID, c.Config.SentTag, true); err != nil {
 		log.Fatal(err)
