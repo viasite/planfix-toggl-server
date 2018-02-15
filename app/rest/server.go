@@ -12,6 +12,7 @@ import (
 
 	"github.com/viasite/planfix-toggl-server/app/client"
 	"github.com/viasite/planfix-toggl-server/app/config"
+	"time"
 )
 
 // Server is a rest with store
@@ -49,12 +50,34 @@ func (s Server) Run() {
 
 // GET /v1/toggl/entries
 func (s Server) getEntriesCtrl(w http.ResponseWriter, r *http.Request) {
-	entries, err := s.TogglClient.GetEntries()
+	var entries []client.TogglPlanfixEntry
+	var err error
+	queryValues := r.URL.Query()
+	t := queryValues.Get("type")
+	tomorrow := time.Now().AddDate(0, 0, 1).Format("2006-01-02")
+
+	if t == "today" {
+		entries, err = s.TogglClient.GetEntries(
+			s.Config.WorkspaceId,
+			time.Now().Format("2006-01-02"),
+			tomorrow,
+		)
+	} else if t == "pending" {
+		entries, err = s.TogglClient.GetPendingEntries()
+	} else if t == "last" {
+		entries, err = s.TogglClient.GetEntries(
+			s.Config.WorkspaceId,
+			time.Now().AddDate(0, 0, -30).Format("2006-01-02"),
+			tomorrow,
+		)
+	}
 	if err != nil {
 		log.Printf("[WARN] failed to load entries")
 	} else {
 		//status = http.StatusOK
 	}
+
+	entries = s.TogglClient.GroupEntriesByTask(entries)
 
 	//render.Status(r, status)
 	render.JSON(w, r, entries)
@@ -65,7 +88,7 @@ func (s Server) getParamsCtrl(w http.ResponseWriter, r *http.Request) {
 	params := struct {
 		PlanfixAccount string `json:"planfix_account"`
 	}{
-		PlanfixAccount: "tagilcity",
+		PlanfixAccount: s.Config.PlanfixAccount,
 	}
 	render.JSON(w, r, params)
 }

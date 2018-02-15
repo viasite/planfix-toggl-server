@@ -34,7 +34,7 @@ type TogglPlanfixEntry struct {
 	Project         string           `json:"project"`
 	ProjectColor    string           `json:"project_color"`
 	ProjectHexColor string           `json:"project_hex_color"`
-	Client          string           `json:"clientk,omitempty"`
+	Client          string           `json:"client,omitempty"`
 	Tags            []string         `json:"tags"`
 	Start           *time.Time       `json:"start,omitempty"`
 	Stop            *time.Time       `json:"stop,omitempty"`
@@ -44,8 +44,6 @@ type TogglPlanfixEntry struct {
 
 // получает записи из Toggl и отправляет в Планфикс
 func (c TogglClient) SendToPlanfix() (entries []TogglPlanfixEntry, err error) {
-	fmt.Println("not implemented yet")
-
 	pendingEntries, err := c.GetPendingEntries()
 	if err != nil {
 		return []TogglPlanfixEntry{}, err
@@ -64,6 +62,9 @@ func (c TogglClient) SendToPlanfix() (entries []TogglPlanfixEntry, err error) {
 }
 
 func (c TogglClient) GroupEntriesByTask(entries []TogglPlanfixEntry) (grouped []TogglPlanfixEntry) {
+	if len(entries) == 0{
+		return []TogglPlanfixEntry{}
+	}
 	g := make(map[int]TogglPlanfixEntry)
 	for _, entry := range entries {
 		if ge, ok := g[entry.Planfix.TaskId]; ok {
@@ -71,7 +72,7 @@ func (c TogglClient) GroupEntriesByTask(entries []TogglPlanfixEntry) (grouped []
 			ge.Planfix.GroupCount += 1
 			g[entry.Planfix.TaskId] = ge
 		} else {
-			grouped[entry.Planfix.TaskId] = entry
+			g[entry.Planfix.TaskId] = entry
 		}
 	}
 
@@ -90,21 +91,9 @@ func (c TogglClient) GetUserData() (account toggl.Account) {
 	return account
 }
 
-// native toggl report
-// TODO: opts
-func (c TogglClient) GetDetailedReport() (toggl.DetailedReport, error) {
-	report, err := c.Session.GetDetailedReport(
-		c.Config.WorkspaceId,
-		"2018-02-13",
-		"2018-02-14",
-	)
-	return report, err
-}
-
 // report entries with planfix data
-// TODO: opts
-func (c TogglClient) GetEntries() (entries []TogglPlanfixEntry, err error) {
-	report, err := c.GetDetailedReport();
+func (c TogglClient) GetEntries(workspaceId int, since, until string) (entries []TogglPlanfixEntry, err error) {
+	report, err := c.Session.GetDetailedReport(workspaceId, since, until, 1);
 	if err != nil {
 		log.Fatal("[ERROR] %s", err)
 	}
@@ -133,7 +122,7 @@ func (c TogglClient) GetEntries() (entries []TogglPlanfixEntry, err error) {
 
 		for _, tag := range entry.Tags {
 			// only digit == planfix.task_id
-			regex := regexp.MustCompile("/^\\d+$/")
+			regex := regexp.MustCompile(`^\d+$`)
 			if regex.MatchString(tag) {
 				pfe.Planfix.TaskId, _ = strconv.Atoi(tag)
 			}
@@ -160,9 +149,12 @@ func filter(input []TogglPlanfixEntry, f func(entry TogglPlanfixEntry) bool) (ou
 }
 
 func (c TogglClient) GetPendingEntries() ([]TogglPlanfixEntry, error) {
-	fmt.Println("not implemented yet")
 	user := c.GetUserData()
-	entries, err := c.GetEntries()
+	entries, err := c.GetEntries(
+		c.Config.WorkspaceId,
+		time.Now().AddDate(0, 0, -30).Format("2006-01-02"),
+		time.Now().AddDate(0, 0, 1).Format("2006-01-02"),
+	)
 	if err != nil {
 		return []TogglPlanfixEntry{}, err
 	}
