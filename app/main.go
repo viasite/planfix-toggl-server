@@ -17,7 +17,7 @@ func main() {
 	fmt.Printf("planfix-toggl %s\n", revision)
 
 	cfg := config.GetConfig()
-	if (cfg.SmtpSecure){
+	if (cfg.SmtpSecure) {
 		err := "[ERR] Secure SMTP not implemented"
 		log.Fatal(err)
 		os.Exit(1)

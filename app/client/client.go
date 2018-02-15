@@ -42,7 +42,7 @@ type TogglPlanfixEntry struct {
 	Planfix         PlanfixEntryData `json:"planfix"`
 }
 
-func (c TogglClient) RunSender(){
+func (c TogglClient) RunSender() {
 	for {
 		c.SendToPlanfix()
 		time.Sleep(time.Duration(c.Config.SendInterval) * time.Minute)
@@ -66,7 +66,7 @@ func (c TogglClient) SendToPlanfix() (entries []TogglPlanfixEntry, err error) {
 			"%s (%d)",
 			entry.Description,
 			int(math.Floor(float64(entry.Duration)/60000+.5)),
-			)
+		)
 		err := c.sendEntry(entry.Planfix.TaskId, entry)
 		if err != nil {
 			log.Printf("[WARN] entry %s failed to send", entryString)
@@ -78,7 +78,7 @@ func (c TogglClient) SendToPlanfix() (entries []TogglPlanfixEntry, err error) {
 }
 
 func (c TogglClient) GroupEntriesByTask(entries []TogglPlanfixEntry) (grouped []TogglPlanfixEntry) {
-	if len(entries) == 0{
+	if len(entries) == 0 {
 		return []TogglPlanfixEntry{}
 	}
 	g := make(map[int]TogglPlanfixEntry)
