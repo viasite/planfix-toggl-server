@@ -43,6 +43,7 @@ type TogglPlanfixEntry struct {
 }
 
 func (c TogglClient) RunSender() {
+	time.Sleep(1 * time.Second) // wait for server start
 	for {
 		c.SendToPlanfix()
 		time.Sleep(time.Duration(c.Config.SendInterval) * time.Minute)
@@ -55,7 +56,7 @@ func (c TogglClient) RunSender() {
 
 // получает записи из Toggl и отправляет в Планфикс
 func (c TogglClient) SendToPlanfix() (entries []TogglPlanfixEntry, err error) {
-	log.Println("Send to Planfix:")
+	log.Println("[INFO] Send to Planfix:")
 	pendingEntries, err := c.GetPendingEntries()
 	if err != nil {
 		return []TogglPlanfixEntry{}, err
@@ -71,7 +72,7 @@ func (c TogglClient) SendToPlanfix() (entries []TogglPlanfixEntry, err error) {
 		if err != nil {
 			log.Printf("[WARN] entry %s failed to send", entryString)
 		} else {
-			log.Printf("entry %s sent to #%d", entryString, entry.Planfix.TaskId)
+			log.Printf("[INFO] entry %s sent to #%d", entryString, entry.Planfix.TaskId)
 		}
 	}
 	return entries, nil
@@ -208,7 +209,7 @@ func (c TogglClient) sendEntry(planfixTaskId int, entry TogglPlanfixEntry) (erro
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("entry [%s] %s (%d) sent to Planfix", entry.Project, entry.Description, mins)
+	log.Printf("[INFO] entry [%s] %s (%d) sent to Planfix", entry.Project, entry.Description, mins)
 
 	if _, err := c.Session.AddRemoveTag(entry.ID, c.Config.SentTag, true); err != nil {
 		log.Fatal(err)

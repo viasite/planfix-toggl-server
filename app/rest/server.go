@@ -13,6 +13,7 @@ import (
 	"github.com/viasite/planfix-toggl-server/app/client"
 	"github.com/viasite/planfix-toggl-server/app/config"
 	"time"
+	"fmt"
 )
 
 // Server is a rest with store
@@ -24,14 +25,12 @@ type Server struct {
 
 //Run the lister and request's router, activate rest server
 func (s Server) Run() {
-	log.Printf("[INFO] activate rest server")
+	port := 8096
+	log.Printf("[INFO] start rest server at :%d", port)
 
 	router := chi.NewRouter()
 	router.Use(middleware.RealIP, Recoverer)
-	//router.Use(middleware.Throttle(1000), middleware.Timeout(60*time.Second))
-	//router.Use(Limiter(10), AppInfo("secrets", s.Version), Ping)
 	router.Use(AppInfo("planfix-toggl", s.Version), Ping)
-	//router.Use(Rewrite("/show/(.*)", "/show/?$1"))
 
 	router.Route("/api/v1", func(r chi.Router) {
 		r.Use(Logger())
@@ -45,7 +44,7 @@ func (s Server) Run() {
 
 	s.fileServer(router, "/", http.Dir(filepath.Join(".", "docroot")))
 
-	log.Fatal(http.ListenAndServe(":8096", router))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), router))
 }
 
 // GET /v1/toggl/entries
