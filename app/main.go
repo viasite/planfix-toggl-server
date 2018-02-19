@@ -10,6 +10,7 @@ import (
 	"github.com/popstas/go-toggl"
 	"github.com/viasite/planfix-toggl-server/app/client"
 	"github.com/viasite/planfix-toggl-server/app/rest"
+	"github.com/popstas/planfix-go/planfix"
 )
 
 var revision string
@@ -24,10 +25,20 @@ func main() {
 		os.Exit(1)
 	}
 
+	planfixApi := planfix.New(
+		cfg.PlanfixApiUrl,
+		cfg.PlanfixApiKey,
+		cfg.PlanfixAccount,
+		cfg.PlanfixUserName,
+		cfg.PlanfixUserPassword,
+	)
+	planfixApi.UserAgent = "planfix-toggl"
+
 	sess := toggl.OpenSession(cfg.ApiToken)
-	TogglClient := client.TogglClient{
-		Session: sess,
-		Config:  cfg,
+	togglClient := client.TogglClient{
+		Session:    sess,
+		Config:     cfg,
+		PlanfixApi: planfixApi,
 	}
 
 	if cfg.LogFile != "" {
@@ -46,14 +57,14 @@ func main() {
 	}
 
 	if cfg.SendInterval > 0 {
-		go TogglClient.RunSender()
+		go togglClient.RunSender()
 	} else {
 		log.Println("[INFO] No send interval, sending disabled")
 	}
 
 	server := rest.Server{
 		Version:     revision,
-		TogglClient: TogglClient,
+		TogglClient: togglClient,
 		Config:      cfg,
 	}
 	server.Run()

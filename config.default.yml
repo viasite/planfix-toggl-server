@@ -8,10 +8,18 @@ planfixAnaliticName: Поминутная работа программиста
 sendInterval: 60 # минут
 logFile: planfix-toggl.log
 
-# copy above options to config.yml
+planfixApiUrl: https://api.planfix.ru/xml/
+
+# скопируйте в config.yml
 apiToken:
 workspaceId:
+
+# for email send
 smtpLogin:
 smtpPassword:
 emailFrom:
 planfixAuthorName:
+
+# for api send
+planfixUserName:
+planfixUserPassword:

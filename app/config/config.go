@@ -20,6 +20,10 @@ type Config struct {
 	EmailFrom           string `env:"EMAIL_FROM" yaml:"emailFrom"`
 	PlanfixAuthorName   string `env:"PLANFIX_AUTHOR_NAME" yaml:"planfixAuthorName"`
 	Debug               bool   `env:"DEBUG" yaml:"debug"`
+	PlanfixApiKey       string `env:"PLANFIX_API_KEY" yaml:"planfixApiKey"`
+	PlanfixApiUrl       string `env:"PLANFIX_API_URL" yaml:"planfixApiUrl"`
+	PlanfixUserName     string `env:"PLANFIX_USER_NAME" yaml:"planfixUserName"`
+	PlanfixUserPassword string `env:"PLANFIX_USER_PASSWORD" yaml:"planfixUserPassword"`
 }
 
 func GetConfig() (cfg Config) {

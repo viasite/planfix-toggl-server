@@ -10,14 +10,16 @@ import (
 	"strconv"
 	"net/smtp"
 	"time"
+	"github.com/popstas/planfix-go/planfix"
 )
 
 // данные не меняются при этой опции
 var testMode = false
 
 type TogglClient struct {
-	Session toggl.Session
-	Config  config.Config
+	Session    toggl.Session
+	Config     config.Config
+	PlanfixApi planfix.Api
 }
 
 type PlanfixEntryData struct {
@@ -185,10 +187,37 @@ func (c TogglClient) GetPendingEntries() ([]TogglPlanfixEntry, error) {
 // отправка письма и пометка тегом sent в Toggl
 func (c TogglClient) sendEntry(planfixTaskId int, entry TogglPlanfixEntry) (error) {
 	mins := int(math.Floor(float64(entry.Duration)/60000 + .5))
+	date := entry.Start.Format("2006-01-02")
+	comment := fmt.Sprintf(
+		"toggl: [%s] %s",
+		entry.Project,
+		entry.Description,
+	)
 	if testMode {
 		return nil
 	}
 
+	// send to planfix
+	var err error
+	if c.Config.PlanfixUserName != "" && c.Config.PlanfixUserPassword != "" {
+		err = c.sendWithPlanfixApi(planfixTaskId, date, mins, comment)
+	} else {
+		err = c.sendWithSmtp(planfixTaskId, date, mins)
+	}
+	if err != nil {
+		log.Printf("[ERROR] %v", err)
+		return nil
+	}
+
+	// mark as sent in toggl
+	if _, err := c.Session.AddRemoveTag(entry.ID, c.Config.SentTag, true); err != nil {
+		log.Fatal(err)
+		return err
+	}
+	return nil
+}
+
+func (c TogglClient) sendWithSmtp(planfixTaskId int, date string, mins int) error {
 	auth := smtp.PlainAuth("", c.Config.SmtpLogin, c.Config.SmtpPassword, c.Config.SmtpHost)
 	taskEmail := fmt.Sprintf("task+%d@%s.planfix.ru", planfixTaskId, c.Config.PlanfixAccount)
 	testEmail := c.Config.EmailFrom
@@ -209,18 +238,46 @@ func (c TogglClient) sendEntry(planfixTaskId int, entry TogglPlanfixEntry) (erro
 		c.Config.PlanfixAnaliticName,
 		mins,
 		c.Config.PlanfixAuthorName,
-		entry.Start.Format("2006-01-02"),
+		date,
 	)
 	msg := []byte(body)
-	err := smtp.SendMail(fmt.Sprintf("%s:%d", c.Config.SmtpHost, c.Config.SmtpPort), auth, c.Config.EmailFrom, to, msg)
-	if err != nil {
-		log.Printf("[ERROR] %v - %s", err, taskEmail)
-		return nil
-	}
+	return smtp.SendMail(fmt.Sprintf("%s:%d", c.Config.SmtpHost, c.Config.SmtpPort), auth, c.Config.EmailFrom, to, msg)
+}
 
-	if _, err := c.Session.AddRemoveTag(entry.ID, c.Config.SentTag, true); err != nil {
-		log.Fatal(err)
-		return err
-	}
-	return nil
+func (c TogglClient) sendWithPlanfixApi(planfixTaskId int, date string, mins int, comment string) error {
+	//var actionAdded planfix.XmlResponseActionAdd
+	_, err := c.PlanfixApi.ActionAdd(planfix.XmlRequestActionAdd{
+		TaskGeneral: planfixTaskId,
+		Description: "",
+		Analitics: []planfix.XmlRequestAnalitic{
+			{
+				Id: 263,
+				ItemData: []planfix.XmlRequestAnaliticField{
+					{
+						FieldId: 741,   // name
+						Value:   "725", // поминутное программирование
+					},
+					{
+						FieldId: 747, // count
+						Value:   "5", // минут
+					},
+					{
+						FieldId: 749, // comment
+						Value:   comment,
+					},
+					{
+						FieldId: 743, // date
+						Value:   time.Now().Format("2006-01-02"),
+					},
+					{
+						FieldId: 846,   // user
+						Value: struct {
+							Id []int `xml:"id"`
+						}{[]int{9230}}, // Станислав Попов
+					},
+				},
+			},
+		},
+	})
+	return err
 }
