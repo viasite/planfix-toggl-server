@@ -24,6 +24,7 @@ type Config struct {
 	PlanfixApiUrl       string `env:"PLANFIX_API_URL" yaml:"planfixApiUrl"`
 	PlanfixUserName     string `env:"PLANFIX_USER_NAME" yaml:"planfixUserName"`
 	PlanfixUserPassword string `env:"PLANFIX_USER_PASSWORD" yaml:"planfixUserPassword"`
+	PlanfixUserId       int    `env:"PLANFIX_USER_ID" yaml:"planfixUserId"`
 }
 
 func GetConfig() (cfg Config) {
