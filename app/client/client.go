@@ -64,7 +64,8 @@ func (c TogglClient) SendToPlanfix() (entries []TogglPlanfixEntry, err error) {
 	entries = c.GroupEntriesByTask(pendingEntries)
 	for _, entry := range entries {
 		entryString := fmt.Sprintf(
-			"%s (%d)",
+			"[%s] %s (%d)",
+			entry.Project,
 			entry.Description,
 			int(math.Floor(float64(entry.Duration)/60000+.5)),
 		)
@@ -190,26 +191,32 @@ func (c TogglClient) sendEntry(planfixTaskId int, entry TogglPlanfixEntry) (erro
 
 	auth := smtp.PlainAuth("", c.Config.SmtpLogin, c.Config.SmtpPassword, c.Config.SmtpHost)
 	taskEmail := fmt.Sprintf("task+%d@%s.planfix.ru", planfixTaskId, c.Config.PlanfixAccount)
-	to := []string{taskEmail}
-	msg := []byte(fmt.Sprintf(
-		"To: %s\r\n"+
+	testEmail := c.Config.EmailFrom
+	//test2Email := "task+530436@tagilcity.planfix.ru"
+	to := []string{taskEmail, testEmail}
+	body := fmt.Sprintf(
+		"Content-Type: text/plain; charset=\"utf-8\"\r\n"+
+			"From: %s\r\n"+
+			"To: %s\r\n"+
 			"Subject: @toggl @nonotify\r\n"+
 			"\r\n"+
 			"Вид работы: %s\r\n"+
 			"time: %d\r\n"+
 			"Автор: %s\r\n"+
 			"Дата: %s\r\n",
+		c.Config.EmailFrom,
 		taskEmail,
 		c.Config.PlanfixAnaliticName,
 		mins,
 		c.Config.PlanfixAuthorName,
 		entry.Start.Format("2006-01-02"),
-	))
+	)
+	msg := []byte(body)
 	err := smtp.SendMail(fmt.Sprintf("%s:%d", c.Config.SmtpHost, c.Config.SmtpPort), auth, c.Config.EmailFrom, to, msg)
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("[ERROR] %v - %s", err, taskEmail)
+		return nil
 	}
-	log.Printf("[INFO] entry [%s] %s (%d) sent to Planfix", entry.Project, entry.Description, mins)
 
 	if _, err := c.Session.AddRemoveTag(entry.ID, c.Config.SentTag, true); err != nil {
 		log.Fatal(err)
