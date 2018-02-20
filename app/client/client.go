@@ -206,7 +206,7 @@ func (c TogglClient) sendEntry(planfixTaskId int, entry TogglPlanfixEntry) (erro
 	}
 	if err != nil {
 		log.Printf("[ERROR] %v", err)
-		return nil
+		return err
 	}
 
 	// mark as sent in toggl
@@ -259,7 +259,7 @@ func (c TogglClient) sendWithPlanfixApi(planfixTaskId int, date string, mins int
 					},
 					{
 						FieldId: 747, // count
-						Value:   "5", // минут
+						Value:   mins, // минут
 					},
 					{
 						FieldId: 749, // comment
