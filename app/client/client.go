@@ -247,7 +247,10 @@ func (c TogglClient) sendWithSmtp(planfixTaskId int, date string, mins int) erro
 
 func (c TogglClient) sendWithPlanfixApi(planfixTaskId int, date string, mins int, comment string) error {
 	analiticId := 263 // выработка
-	nameId := "725" // поминутное программирование
+	nameId := "725"   // поминутное программирование
+	userIds := struct {
+		Id []int `xml:"id"`
+	}{[]int{c.Config.PlanfixUserId}}
 
 	_, err := c.PlanfixApi.ActionAdd(planfix.XmlRequestActionAdd{
 		TaskGeneral: planfixTaskId,
@@ -255,29 +258,13 @@ func (c TogglClient) sendWithPlanfixApi(planfixTaskId int, date string, mins int
 		Analitics: []planfix.XmlRequestAnalitic{
 			{
 				Id: analiticId,
+				// аналитика должна содержать поля: вид работы, кол-во, дата, коммент, юзеры
 				ItemData: []planfix.XmlRequestAnaliticField{
-					{
-						FieldId: 741,   // name
-						Value:   nameId,
-					},
-					{
-						FieldId: 747, // count
-						Value:   mins, // минут
-					},
-					{
-						FieldId: 749, // comment
-						Value:   comment,
-					},
-					{
-						FieldId: 743, // date
-						Value:   time.Now().Format("2006-01-02"),
-					},
-					{
-						FieldId: 846,   // user
-						Value: struct {
-							Id []int `xml:"id"`
-						}{[]int{c.Config.PlanfixUserId}},
-					},
+					{FieldId: 741, Value: nameId},  // name
+					{FieldId: 747, Value: mins},    // count, минут
+					{FieldId: 749, Value: comment}, // comment
+					{FieldId: 743, Value: date},    // date
+					{FieldId: 846, Value: userIds}, // user
 				},
 			},
 		},
