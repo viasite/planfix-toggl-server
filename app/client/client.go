@@ -245,17 +245,19 @@ func (c TogglClient) sendWithSmtp(planfixTaskId int, date string, mins int) erro
 }
 
 func (c TogglClient) sendWithPlanfixApi(planfixTaskId int, date string, mins int, comment string) error {
-	//var actionAdded planfix.XmlResponseActionAdd
+	analiticId := 263 // выработка
+	nameId := "725" // поминутное программирование
+
 	_, err := c.PlanfixApi.ActionAdd(planfix.XmlRequestActionAdd{
 		TaskGeneral: planfixTaskId,
 		Description: "",
 		Analitics: []planfix.XmlRequestAnalitic{
 			{
-				Id: 263,
+				Id: analiticId,
 				ItemData: []planfix.XmlRequestAnaliticField{
 					{
 						FieldId: 741,   // name
-						Value:   "725", // поминутное программирование
+						Value:   nameId,
 					},
 					{
 						FieldId: 747, // count
@@ -273,7 +275,7 @@ func (c TogglClient) sendWithPlanfixApi(planfixTaskId int, date string, mins int
 						FieldId: 846,   // user
 						Value: struct {
 							Id []int `xml:"id"`
-						}{[]int{9230}}, // Станислав Попов
+						}{[]int{c.Config.PlanfixUserId}},
 					},
 				},
 			},
