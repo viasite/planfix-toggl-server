@@ -57,7 +57,8 @@ func (c TogglClient) RunSender() {
 }
 
 // получает записи из Toggl и отправляет в Планфикс
-func (c TogglClient) SendToPlanfix() (entries []TogglPlanfixEntry, err error) {
+// * нужна, чтобы сохранился c.PlanfixApi.Sid при авторизации
+func (c *TogglClient) SendToPlanfix() (entries []TogglPlanfixEntry, err error) {
 	log.Println("[INFO] Send to Planfix:")
 	pendingEntries, err := c.GetPendingEntries()
 	if err != nil {
