@@ -76,7 +76,7 @@ func (s Server) getEntriesCtrl(w http.ResponseWriter, r *http.Request) {
 		//status = http.StatusOK
 	}
 
-	entries = s.TogglClient.GroupEntriesByTask(entries)
+	entries = s.TogglClient.SumEntriesGroup(s.TogglClient.GroupEntriesByTask(entries))
 
 	//render.Status(r, status)
 	render.JSON(w, r, entries)
