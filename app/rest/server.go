@@ -51,6 +51,7 @@ func (s Server) Run() {
 func (s Server) getEntriesCtrl(w http.ResponseWriter, r *http.Request) {
 	var entries []client.TogglPlanfixEntry
 	var err error
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	queryValues := r.URL.Query()
 	t := queryValues.Get("type")
 	tomorrow := time.Now().AddDate(0, 0, 1).Format("2006-01-02")
@@ -84,6 +85,7 @@ func (s Server) getEntriesCtrl(w http.ResponseWriter, r *http.Request) {
 
 // GET /params
 func (s Server) getParamsCtrl(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	params := struct {
 		PlanfixAccount string `json:"planfix_account"`
 	}{
