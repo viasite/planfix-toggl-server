@@ -1,5 +1,6 @@
-apiToken:
-workspaceId:
+togglApiToken:
+togglWorkspaceId:
+planfixAccount:
 planfixApiKey:
 planfixUserName:
 planfixUserPassword:

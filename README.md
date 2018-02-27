@@ -29,6 +29,8 @@
 скорее всего, pull request никогда не примут, можно поставить его в режиме разработчика отсюда:
 https://github.com/popstas/toggl-button
 
+Кое-какую информацию можно смотреть через веб-интерфейс на http://localhost:8096
+
 
 
 ## Настройка
@@ -42,9 +44,9 @@ https://github.com/popstas/toggl-button
   
 Настройки для всех:
 
-- `sentTag` - тег, которым помечаются отправленные toggl-записи
-- `apiToken` - токен Toggl, в настройках profile в Toggl
-- `workspaceId` - посмотрите в url вашего workspace в Toggl
+- `togglSentTag` - тег, которым помечаются отправленные toggl-записи
+- `togglApiToken` - токен Toggl, в настройках profile в Toggl
+- `togglWorkspaceId` - посмотрите в url вашего workspace в Toggl
 - `planfixAccount` - поддомен вашего Планфикс аккаунта
 - `sendInterval` - период отправки данных в Планфикс, в минутах
 
@@ -52,7 +54,7 @@ https://github.com/popstas/toggl-button
 
 - `smtpHost`, `smtpPort`, `smtpSecure` - настройки SMTP для отправки. Нужно настроить на свой рабочий ящик, который связан с аккаунтом в Планфиксе
 - `smtpLogin`, `smtpPassword` - логин и пароль от вашей почты (настройки по умолчанию для Яндекс почты)
-- `emailFrom` - должен совпадать с email вашего аккаунта в Планфиксе и у smtp должно быть право отправлять письма от этого имени
+- `smtpEmailFrom` - должен совпадать с email вашего аккаунта в Планфиксе и у smtp должно быть право отправлять письма от этого имени
 - `planfixAnaliticName` - как называется поминутная аналитика, которую вы хотите проставлять в Планфикс
 - `planfixAuthorName` - ваше Имя Фамилия в Планфиксе
 

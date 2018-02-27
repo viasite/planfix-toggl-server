@@ -125,10 +125,10 @@ func (c TogglClient) GetUserData() (account toggl.Account) {
 }
 
 // report entries with planfix data
-func (c TogglClient) GetEntries(workspaceId int, since, until string) (entries []TogglPlanfixEntry, err error) {
-	report, err := c.Session.GetDetailedReport(workspaceId, since, until, 1);
+func (c TogglClient) GetEntries(togglWorkspaceId int, since, until string) (entries []TogglPlanfixEntry, err error) {
+	report, err := c.Session.GetDetailedReport(togglWorkspaceId, since, until, 1);
 	if err != nil {
-		log.Fatal("[ERROR] %s", err)
+		log.Printf("[ERROR] Toggl: %s", err)
 	}
 
 	for _, entry := range report.Data {
@@ -161,7 +161,7 @@ func (c TogglClient) GetEntries(workspaceId int, since, until string) (entries [
 			}
 
 			// sent tag
-			if tag == c.Config.SentTag {
+			if tag == c.Config.TogglSentTag {
 				pfe.Planfix.Sent = true
 			}
 		}
@@ -184,7 +184,7 @@ func filter(input []TogglPlanfixEntry, f func(entry TogglPlanfixEntry) bool) (ou
 func (c TogglClient) GetPendingEntries() ([]TogglPlanfixEntry, error) {
 	user := c.GetUserData()
 	entries, err := c.GetEntries(
-		c.Config.WorkspaceId,
+		c.Config.TogglWorkspaceId,
 		time.Now().AddDate(0, 0, -30).Format("2006-01-02"),
 		time.Now().AddDate(0, 0, 1).Format("2006-01-02"),
 	)
@@ -247,7 +247,7 @@ func (c TogglClient) sendEntries(planfixTaskId int, entries []TogglPlanfixEntry)
 			int(math.Floor(float64(entry.Duration)/60000 + .5)),
 		)
 		log.Printf("[DEBUG] marking %s in toggl", entryString)
-		if _, err := c.Session.AddRemoveTag(entry.ID, c.Config.SentTag, true); err != nil {
+		if _, err := c.Session.AddRemoveTag(entry.ID, c.Config.TogglSentTag, true); err != nil {
 			log.Fatal(err)
 			return err
 		}
@@ -258,7 +258,7 @@ func (c TogglClient) sendEntries(planfixTaskId int, entries []TogglPlanfixEntry)
 func (c TogglClient) sendWithSmtp(planfixTaskId int, date string, mins int) error {
 	auth := smtp.PlainAuth("", c.Config.SmtpLogin, c.Config.SmtpPassword, c.Config.SmtpHost)
 	taskEmail := fmt.Sprintf("task+%d@%s.planfix.ru", planfixTaskId, c.Config.PlanfixAccount)
-	testEmail := c.Config.EmailFrom
+	testEmail := c.Config.SmtpEmailFrom
 	//test2Email := "task+530436@tagilcity.planfix.ru"
 	to := []string{taskEmail, testEmail}
 	body := fmt.Sprintf(
@@ -271,7 +271,7 @@ func (c TogglClient) sendWithSmtp(planfixTaskId int, date string, mins int) erro
 			"time: %d\r\n"+
 			"Автор: %s\r\n"+
 			"Дата: %s\r\n",
-		c.Config.EmailFrom,
+		c.Config.SmtpEmailFrom,
 		taskEmail,
 		c.Config.PlanfixAnaliticName,
 		mins,
@@ -279,7 +279,7 @@ func (c TogglClient) sendWithSmtp(planfixTaskId int, date string, mins int) erro
 		date,
 	)
 	msg := []byte(body)
-	return smtp.SendMail(fmt.Sprintf("%s:%d", c.Config.SmtpHost, c.Config.SmtpPort), auth, c.Config.EmailFrom, to, msg)
+	return smtp.SendMail(fmt.Sprintf("%s:%d", c.Config.SmtpHost, c.Config.SmtpPort), auth, c.Config.SmtpEmailFrom, to, msg)
 }
 
 func (c TogglClient) sendWithPlanfixApi(planfixTaskId int, date string, mins int, comment string) error {

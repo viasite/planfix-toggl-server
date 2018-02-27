@@ -1,22 +1,21 @@
-planfixAccount: tagilcity
 sendInterval: 60 # минут
 
-# скопируйте в config.yml
-apiToken:
-workspaceId:
+togglApiToken:
+togglWorkspaceId:
+togglSentTag: sent
 
 # for email send
-sentTag: sent
 smtpHost: smtp.yandex.ru
 smtpPort: 587
 smtpSecure: false
 smtpLogin:
 smtpPassword:
-emailFrom:
+smtpEmailFrom:
 planfixAuthorName:
 planfixAnaliticName: Поминутная работа программиста
 
 # for api send
+planfixAccount:
 planfixApiUrl: https://api.planfix.ru/xml/
 planfixUserName:
 planfixUserPassword:

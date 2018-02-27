@@ -47,7 +47,7 @@ func main() {
 	}
 
 	// create toggl client
-	sess := toggl.OpenSession(cfg.ApiToken)
+	sess := toggl.OpenSession(cfg.TogglApiToken)
 	togglClient := client.TogglClient{
 		Session:    sess,
 		Config:     cfg,
