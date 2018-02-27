@@ -1,0 +1,1 @@
+go build -o planfix-toggl-server.exe github.com/viasite/planfix-toggl-server/app

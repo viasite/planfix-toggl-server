@@ -17,8 +17,7 @@
 
 ## Установка
 1. Скачайте [последний релиз](https://github.com/viasite/planfix-toggl-server/releases) в папку
-2. Скопируйте [config.default.yml](config.default.yml) туда же
-3. Создайте config.yml, добавьте туда ваши пароли и прочие нужные пустые поля из config.default.yml 
+2. Заполните config.yml, добавьте туда ваши пароли и прочие нужные пустые поля, описние полей ниже 
 
 
 
@@ -30,6 +29,16 @@
 https://github.com/popstas/toggl-button
 
 Кое-какую информацию можно смотреть через веб-интерфейс на http://localhost:8096
+
+
+
+## Постоянное использование
+Добавьте задачу в планировщик заданий Windows:
+
+- при включении компьютера
+- путь к planfix-toggl-server.exe
+- аргументы: `-no-console`
+- укажите рабочую папку 
 
 
 

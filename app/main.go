@@ -11,19 +11,44 @@ import (
 	"github.com/viasite/planfix-toggl-server/app/client"
 	"github.com/viasite/planfix-toggl-server/app/rest"
 	"github.com/popstas/planfix-go/planfix"
+	"flag"
+	"runtime"
+	"syscall"
 )
 
 var revision string
+
+func hideConsole() {
+	getConsoleWindow := syscall.NewLazyDLL("kernel32.dll").NewProc("GetConsoleWindow")
+	showWindow := syscall.NewLazyDLL("user32.dll").NewProc("ShowWindow")
+	if getConsoleWindow.Find() == nil && showWindow.Find() == nil {
+		hwnd, _, _ := getConsoleWindow.Call()
+		if hwnd != 0 {
+			showWindow.Call(hwnd, 0)
+		}
+	}
+}
 
 func main() {
 	fmt.Printf("planfix-toggl %s\n", revision)
 
 	var err error
 	cfg := config.GetConfig()
+
 	if (cfg.SmtpSecure) {
 		err := "[ERR] Secure SMTP not implemented"
 		log.Fatal(err)
 		os.Exit(1)
+	}
+
+	if runtime.GOOS == "windows" {
+		// Allow user to hide the console window
+		flag.BoolVar(&cfg.NoConsole, "no-console", false, "Hide console window")
+	}
+	flag.Parse()
+
+	if cfg.NoConsole {
+		hideConsole()
 	}
 
 	planfixApi := planfix.New(

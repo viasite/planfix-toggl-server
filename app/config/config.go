@@ -11,6 +11,7 @@ type Config struct {
 	PlanfixAccount             string `env:"PLANFIX_ACCOUNT" yaml:"planfixAccount"`
 	SendInterval               int    `env:"SEND_INTERVAL" yaml:"sendInterval"`
 	LogFile                    string `env:"LOG_FILE" yaml:"logFile"`
+	NoConsole                  bool   `env:"NO_CONSOLE" yaml:"noConsole"`
 	TogglApiToken              string `env:"TOGGL_API_TOKEN" yaml:"togglApiToken"`
 	TogglWorkspaceId           int    `env:"TOGGL_WORKSPACE_ID" yaml:"togglWorkspaceId"`
 	TogglSentTag               string `env:"TOGGL_SENT_TAG" yaml:"togglSentTag"`
