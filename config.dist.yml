@@ -4,3 +4,11 @@ planfixAccount:
 planfixApiKey:
 planfixUserName:
 planfixUserPassword:
+planfixAnaliticName: # Выработка
+planfixAnaliticTypeName: # Вид работы
+planfixAnaliticTypeValue: # Поминутная работа программиста
+planfixAnaliticTypeValueId: # id Поминутная работа программиста
+planfixAnaliticCountName: # Кол-во
+planfixAnaliticCommentName: # Комментарий / ссылка
+planfixAnaliticDateName: # Дата
+planfixAnaliticUsersName: # Сотрудник

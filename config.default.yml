@@ -12,7 +12,7 @@ smtpLogin:
 smtpPassword:
 smtpEmailFrom:
 planfixAuthorName:
-planfixAnaliticName: Поминутная работа программиста
+planfixAnaliticName:
 
 # for api send
 planfixAccount:

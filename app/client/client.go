@@ -15,6 +15,7 @@ import (
 
 // данные не меняются при этой опции
 var testMode = false
+var analiticDataCached PlanfixAnaliticData
 
 type TogglClient struct {
 	Session    toggl.Session
@@ -45,11 +46,21 @@ type TogglPlanfixEntry struct {
 }
 
 type TogglPlanfixEntryGroup struct {
-	Entries []TogglPlanfixEntry
-	Description string
-	Project string
+	Entries         []TogglPlanfixEntry
+	Description     string
+	Project         string
 	ProjectHexColor string
-	Duration int64
+	Duration        int64
+}
+
+type PlanfixAnaliticData struct {
+	Id          int
+	TypeId      int
+	TypeValueId int
+	CountId     int
+	CommentId   int
+	DateId      int
+	UsersId     int
 }
 
 func (c TogglClient) RunSender() {
@@ -244,7 +255,7 @@ func (c TogglClient) sendEntries(planfixTaskId int, entries []TogglPlanfixEntry)
 			"[%s] %s (%d)",
 			entry.Project,
 			entry.Description,
-			int(math.Floor(float64(entry.Duration)/60000 + .5)),
+			int(math.Floor(float64(entry.Duration)/60000+.5)),
 		)
 		log.Printf("[DEBUG] marking %s in toggl", entryString)
 		if _, err := c.Session.AddRemoveTag(entry.ID, c.Config.TogglSentTag, true); err != nil {
@@ -273,7 +284,7 @@ func (c TogglClient) sendWithSmtp(planfixTaskId int, date string, mins int) erro
 			"Дата: %s\r\n",
 		c.Config.SmtpEmailFrom,
 		taskEmail,
-		c.Config.PlanfixAnaliticName,
+		c.Config.PlanfixAnaliticTypeValue,
 		mins,
 		c.Config.PlanfixAuthorName,
 		date,
@@ -282,26 +293,79 @@ func (c TogglClient) sendWithSmtp(planfixTaskId int, date string, mins int) erro
 	return smtp.SendMail(fmt.Sprintf("%s:%d", c.Config.SmtpHost, c.Config.SmtpPort), auth, c.Config.SmtpEmailFrom, to, msg)
 }
 
+func (c TogglClient) getAnaliticData(name, typeName, countName, commentName, dateName, usersName string) (PlanfixAnaliticData, error) {
+	if analiticDataCached.Id != 0 { // only on first call
+		return analiticDataCached, nil
+	}
+
+	analitic, err := c.PlanfixApi.GetAnaliticByName(name)
+	if err != nil {
+		return PlanfixAnaliticData{}, err
+	}
+	analiticOptions, err := c.PlanfixApi.AnaliticGetOptions(analitic.Id)
+	if err != nil {
+		return PlanfixAnaliticData{}, err
+	}
+
+	analiticData := PlanfixAnaliticData{
+		Id: analitic.Id,
+	}
+
+	for _, field := range analiticOptions.Analitic.Fields {
+		if field.Name == typeName {
+			analiticData.TypeId = field.Id
+		}
+		if field.Name == countName {
+			analiticData.CountId = field.Id
+		}
+		if field.Name == commentName {
+			analiticData.CommentId = field.Id
+		}
+		if field.Name == dateName {
+			analiticData.DateId = field.Id
+		}
+		if field.Name == usersName {
+			analiticData.UsersId = field.Id
+		}
+	}
+
+	if analiticData.TypeValueId == 0 {
+		analiticData.TypeValueId = c.Config.PlanfixAnaliticTypeValueId
+	}
+
+	analiticDataCached = analiticData
+	return analiticData, nil
+}
+
 func (c TogglClient) sendWithPlanfixApi(planfixTaskId int, date string, mins int, comment string) error {
-	analiticId := 263 // выработка
-	nameId := "725"   // поминутное программирование
+	analiticData, err := c.getAnaliticData(
+		c.Config.PlanfixAnaliticName,
+		c.Config.PlanfixAnaliticTypeName,
+		c.Config.PlanfixAnaliticCountName,
+		c.Config.PlanfixAnaliticCommentName,
+		c.Config.PlanfixAnaliticDateName,
+		c.Config.PlanfixAnaliticUsersName,
+	)
+	if err != nil {
+		return err
+	}
 	userIds := struct {
 		Id []int `xml:"id"`
 	}{[]int{c.Config.PlanfixUserId}}
 
-	_, err := c.PlanfixApi.ActionAdd(planfix.XmlRequestActionAdd{
+	_, err = c.PlanfixApi.ActionAdd(planfix.XmlRequestActionAdd{
 		TaskGeneral: planfixTaskId,
 		Description: "",
 		Analitics: []planfix.XmlRequestAnalitic{
 			{
-				Id: analiticId,
+				Id: analiticData.Id,
 				// аналитика должна содержать поля: вид работы, кол-во, дата, коммент, юзеры
 				ItemData: []planfix.XmlRequestAnaliticField{
-					{FieldId: 741, Value: nameId},  // name
-					{FieldId: 747, Value: mins},    // count, минут
-					{FieldId: 749, Value: comment}, // comment
-					{FieldId: 743, Value: date},    // date
-					{FieldId: 846, Value: userIds}, // user
+					{FieldId: analiticData.TypeId, Value: analiticData.TypeValueId}, // name
+					{FieldId: analiticData.CountId, Value: mins},                    // count, минут
+					{FieldId: analiticData.CommentId, Value: comment},               // comment
+					{FieldId: analiticData.DateId, Value: date},                     // date
+					{FieldId: analiticData.UsersId, Value: userIds},                 // user
 				},
 			},
 		},
