@@ -75,7 +75,6 @@ https://github.com/popstas/toggl-button
 - `planfixAnaliticName` - выработка
 - `planfixAnaliticTypeName` - вид работы (справочник работ)
 - `planfixAnaliticTypeValue` - поминутная работа программиста (вид работы)
-- `planfixAnaliticTypeValueId` - id Поминутная работа программиста (id вида работы, мне не удалось получить этот id программно, поэтому пока что придется вручную вбивать)
 - `planfixAnaliticCountName` - кол-во (минут)
 - `planfixAnaliticCommentName` - комментарий / ссылка (текст, описание аналитики)
 - `planfixAnaliticDateName` - дата (день, без времени)

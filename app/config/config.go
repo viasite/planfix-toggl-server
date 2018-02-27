@@ -28,7 +28,6 @@ type Config struct {
 	PlanfixAnaliticName        string `env:"PLANFIX_ANALITIC_NAME" yaml:"planfixAnaliticName"`
 	PlanfixAnaliticTypeName    string `env:"PLANFIX_ANALITIC_TYPE_NAME" yaml:"planfixAnaliticTypeName"`
 	PlanfixAnaliticTypeValue   string `env:"PLANFIX_ANALITIC_TYPE_VALUE" yaml:"planfixAnaliticTypeValue"`
-	PlanfixAnaliticTypeValueId int    `env:"PLANFIX_ANALITIC_TYPE_VALUE_ID" yaml:"planfixAnaliticTypeValueId"`
 	PlanfixAnaliticCountName   string `env:"PLANFIX_ANALITIC_COUNT_NAME" yaml:"planfixAnaliticCountName"`
 	PlanfixAnaliticCommentName string `env:"PLANFIX_ANALITIC_COMMENT_NAME" yaml:"planfixAnaliticCommentName"`
 	PlanfixAnaliticDateName    string `env:"PLANFIX_ANALITIC_DATE_NAME" yaml:"planfixAnaliticDateName"`

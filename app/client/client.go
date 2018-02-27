@@ -314,6 +314,11 @@ func (c TogglClient) getAnaliticData(name, typeName, countName, commentName, dat
 	for _, field := range analiticOptions.Analitic.Fields {
 		if field.Name == typeName {
 			analiticData.TypeId = field.Id
+			record, err := c.PlanfixApi.GetHandbookRecordByName(field.HandbookId, c.Config.PlanfixAnaliticTypeValue)
+			if err != nil {
+				return analiticData, err
+			}
+			analiticData.TypeValueId = record.Key
 		}
 		if field.Name == countName {
 			analiticData.CountId = field.Id
@@ -327,10 +332,6 @@ func (c TogglClient) getAnaliticData(name, typeName, countName, commentName, dat
 		if field.Name == usersName {
 			analiticData.UsersId = field.Id
 		}
-	}
-
-	if analiticData.TypeValueId == 0 {
-		analiticData.TypeValueId = c.Config.PlanfixAnaliticTypeValueId
 	}
 
 	analiticDataCached = analiticData
