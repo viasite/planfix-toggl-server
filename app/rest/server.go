@@ -21,12 +21,13 @@ type Server struct {
 	Version     string
 	TogglClient client.TogglClient
 	Config      config.Config
+	Logger      *log.Logger
 }
 
 //Run the lister and request's router, activate rest server
 func (s Server) Run() {
 	port := 8096
-	log.Printf("[INFO] start rest server at :%d", port)
+	s.Logger.Printf("[INFO] start rest server at :%d", port)
 
 	router := chi.NewRouter()
 	router.Use(middleware.RealIP, Recoverer)
@@ -44,7 +45,7 @@ func (s Server) Run() {
 
 	s.fileServer(router, "/", http.Dir(filepath.Join(".", "docroot")))
 
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), router))
+	s.Logger.Println(http.ListenAndServe(fmt.Sprintf(":%d", port), router))
 }
 
 // GET /v1/toggl/entries
@@ -72,7 +73,7 @@ func (s Server) getEntriesCtrl(w http.ResponseWriter, r *http.Request) {
 		)
 	}
 	if err != nil {
-		log.Printf("[WARN] failed to load entries")
+		s.Logger.Printf("[WARN] failed to load entries")
 	} else {
 		//status = http.StatusOK
 	}
@@ -96,7 +97,7 @@ func (s Server) getParamsCtrl(w http.ResponseWriter, r *http.Request) {
 
 // serves static files from ./docroot
 func (s Server) fileServer(r chi.Router, path string, root http.FileSystem) {
-	log.Printf("[INFO] run file server for %s", root)
+	s.Logger.Printf("[INFO] run file server for %s", root)
 	fs := http.StripPrefix(path, http.FileServer(root))
 	if path != "/" && path[len(path)-1] != '/' {
 		r.Get(path, http.RedirectHandler(path+"/", 301).ServeHTTP)

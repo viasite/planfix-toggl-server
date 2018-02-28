@@ -21,6 +21,7 @@ type TogglClient struct {
 	Session    toggl.Session
 	Config     config.Config
 	PlanfixApi planfix.Api
+	Logger     *log.Logger
 }
 
 type PlanfixEntryData struct {
@@ -31,7 +32,7 @@ type PlanfixEntryData struct {
 
 type TogglPlanfixEntry struct {
 	toggl.DetailedTimeEntry
-	Planfix         PlanfixEntryData `json:"planfix"`
+	Planfix PlanfixEntryData `json:"planfix"`
 }
 
 type TogglPlanfixEntryGroup struct {
@@ -69,14 +70,14 @@ func (c TogglClient) RunTagCleaner() {
 	for {
 		entry, err := c.Session.GetCurrentTimeEntry()
 		if err != nil {
-			log.Println("[ERROR] failed to get current toggl entry")
+			c.Logger.Println("[ERROR] failed to get current toggl entry")
 			continue
 		}
 
 		// delete sent tag
 		for _, tag := range entry.Tags {
 			if tag == c.Config.TogglSentTag {
-				log.Printf("[INFO] removed %s tag from current toggl entry", c.Config.TogglSentTag)
+				c.Logger.Printf("[INFO] removed %s tag from current toggl entry", c.Config.TogglSentTag)
 				c.Session.AddRemoveTag(entry.ID, c.Config.TogglSentTag, false)
 			}
 		}
@@ -88,18 +89,19 @@ func (c TogglClient) RunTagCleaner() {
 // получает записи из Toggl и отправляет в Планфикс
 // * нужна, чтобы сохранился c.PlanfixApi.Sid при авторизации
 func (c *TogglClient) SendToPlanfix() (sumEntries []TogglPlanfixEntry, err error) {
-	log.Println("[INFO] send to planfix")
+	c.Logger.Println("[INFO] send to planfix")
 	pendingEntries, err := c.GetPendingEntries()
 	if err != nil {
 		return []TogglPlanfixEntry{}, err
 	}
+	c.Logger.Printf("[INFO] found %d pending entries", len(pendingEntries))
 	grouped := c.GroupEntriesByTask(pendingEntries)
 	for taskId, entries := range grouped {
 		err := c.sendEntries(taskId, entries)
 		if err != nil {
-			log.Printf("[WARN] entries of task #%d failed to send", taskId)
+			c.Logger.Printf("[ERROR] entries of task #%d failed to send", taskId)
 		} else {
-			log.Printf("[INFO] entries sent to https://%s.planfix.ru/task/%d", c.Config.PlanfixAccount, taskId)
+			c.Logger.Printf("[INFO] entries sent to https://%s.planfix.ru/task/%d", c.Config.PlanfixAccount, taskId)
 		}
 	}
 	return c.SumEntriesGroup(grouped), nil
@@ -149,7 +151,7 @@ func (c TogglClient) GetUserData() (account toggl.Account) {
 func (c TogglClient) GetEntries(togglWorkspaceId int, since, until string) (entries []TogglPlanfixEntry, err error) {
 	report, err := c.Session.GetDetailedReport(togglWorkspaceId, since, until, 1);
 	if err != nil {
-		log.Printf("[ERROR] Toggl: %s", err)
+		c.Logger.Printf("[ERROR] Toggl: %s", err)
 	}
 
 	for _, entry := range report.Data {
@@ -223,7 +225,7 @@ func (c TogglClient) sendEntries(planfixTaskId int, entries []TogglPlanfixEntry)
 		firstEntry.Description,
 		mins,
 	)
-	log.Printf("[INFO] sending %s", entryString)
+	c.Logger.Printf("[DEBUG] sending %s", entryString)
 
 	date := firstEntry.Start.Format("2006-01-02")
 	comment := fmt.Sprintf(
@@ -244,7 +246,7 @@ func (c TogglClient) sendEntries(planfixTaskId int, entries []TogglPlanfixEntry)
 		err = c.sendWithSmtp(planfixTaskId, date, mins)
 	}
 	if err != nil {
-		log.Printf("[ERROR] %v", err)
+		c.Logger.Printf("[ERROR] %v", err)
 		return err
 	}
 
@@ -256,9 +258,9 @@ func (c TogglClient) sendEntries(planfixTaskId int, entries []TogglPlanfixEntry)
 			entry.Description,
 			int(math.Floor(float64(entry.Duration)/60000+.5)),
 		)
-		log.Printf("[DEBUG] marking %s in toggl", entryString)
+		c.Logger.Printf("[DEBUG] marking %s in toggl", entryString)
 		if _, err := c.Session.AddRemoveTag(entry.ID, c.Config.TogglSentTag, true); err != nil {
-			log.Fatal(err)
+			c.Logger.Println(err)
 			return err
 		}
 	}

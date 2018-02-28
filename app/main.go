@@ -14,6 +14,7 @@ import (
 	"github.com/popstas/planfix-go/planfix"
 	"flag"
 	"runtime"
+	"io/ioutil"
 )
 
 var revision string
@@ -25,23 +26,25 @@ func main() {
 	cfg := config.GetConfig()
 
 	// logging
+	dlog := log.New(os.Stderr, "[planfix-toggl] ", log.LstdFlags)
+	if cfg.Debug {
+		dlog.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds | log.Lshortfile)
+	} else {
+		toggl.DisableLog()
+	}
 	if cfg.LogFile != "" {
 		f, err := os.OpenFile(cfg.LogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 		if err != nil {
-			log.Fatalf("[ERROR] No send interval, sending disabled", cfg.LogFile)
+			dlog.Fatalf("[ERROR] No send interval, sending disabled", cfg.LogFile)
 		}
 		defer f.Close()
 		mw := io.MultiWriter(os.Stdout, f)
-		log.SetOutput(mw)
-	}
-	toggl.DisableLog()
-	if cfg.Debug {
-		log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds | log.Lshortfile)
+		dlog.SetOutput(mw)
 	}
 
 	if (cfg.SmtpSecure) {
 		err := "[ERROR] Secure SMTP not implemented"
-		log.Fatal(err)
+		dlog.Fatal(err)
 		os.Exit(1)
 	}
 
@@ -62,6 +65,10 @@ func main() {
 		cfg.PlanfixUserName,
 		cfg.PlanfixUserPassword,
 	)
+	if !cfg.Debug {
+		planfixApi.Logger.SetFlags(0)
+		planfixApi.Logger.SetOutput(ioutil.Discard)
+	}
 	planfixApi.UserAgent = "planfix-toggl"
 
 	// get user id
@@ -69,7 +76,7 @@ func main() {
 		var user planfix.XmlResponseUserGet
 		user, err = planfixApi.UserGet(0)
 		if err != nil {
-			log.Printf("[ERROR] ", err.Error())
+			dlog.Printf("[ERROR] ", err.Error())
 			os.Exit(1)
 		}
 		cfg.PlanfixUserId = user.User.Id
@@ -81,6 +88,7 @@ func main() {
 		Session:    sess,
 		Config:     cfg,
 		PlanfixApi: planfixApi,
+		Logger:      dlog,
 	}
 
 	// start tag cleaner
@@ -90,7 +98,7 @@ func main() {
 	if cfg.SendInterval > 0 {
 		go togglClient.RunSender()
 	} else {
-		log.Println("[INFO] No send interval, sending disabled")
+		dlog.Println("[INFO] No send interval, sending disabled")
 	}
 
 	// start server
@@ -98,6 +106,7 @@ func main() {
 		Version:     revision,
 		TogglClient: togglClient,
 		Config:      cfg,
+		Logger:      dlog,
 	}
 	server.Run()
 }
