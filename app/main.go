@@ -24,8 +24,23 @@ func main() {
 	var err error
 	cfg := config.GetConfig()
 
+	// logging
+	if cfg.LogFile != "" {
+		f, err := os.OpenFile(cfg.LogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+		if err != nil {
+			log.Fatalf("[ERROR] No send interval, sending disabled", cfg.LogFile)
+		}
+		defer f.Close()
+		mw := io.MultiWriter(os.Stdout, f)
+		log.SetOutput(mw)
+	}
+	toggl.DisableLog()
+	if cfg.Debug {
+		log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds | log.Lshortfile)
+	}
+
 	if (cfg.SmtpSecure) {
-		err := "[ERR] Secure SMTP not implemented"
+		err := "[ERROR] Secure SMTP not implemented"
 		log.Fatal(err)
 		os.Exit(1)
 	}
@@ -68,20 +83,8 @@ func main() {
 		PlanfixApi: planfixApi,
 	}
 
-	// logging
-	if cfg.LogFile != "" {
-		f, err := os.OpenFile(cfg.LogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
-		if err != nil {
-			log.Fatalf("[ERROR] No send interval, sending disabled", cfg.LogFile)
-		}
-		defer f.Close()
-		mw := io.MultiWriter(os.Stdout, f)
-		log.SetOutput(mw)
-	}
-	toggl.DisableLog()
-	if cfg.Debug {
-		log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds | log.Lshortfile)
-	}
+	// start tag cleaner
+	go togglClient.RunTagCleaner()
 
 	// start sender
 	if cfg.SendInterval > 0 {

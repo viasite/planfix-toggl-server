@@ -75,6 +75,27 @@ func (c TogglClient) RunSender() {
 	}
 }
 
+func (c TogglClient) RunTagCleaner() {
+	time.Sleep(1 * time.Second) // wait for server start
+	for {
+		entry, err := c.Session.GetCurrentTimeEntry()
+		if err != nil {
+			log.Println("[ERROR] failed to get current toggl entry")
+			continue
+		}
+
+		// delete sent tag
+		for _, tag := range entry.Tags {
+			if tag == c.Config.TogglSentTag {
+				log.Printf("[INFO] removed %s tag from current toggl entry", c.Config.TogglSentTag)
+				c.Session.AddRemoveTag(entry.ID, c.Config.TogglSentTag, false)
+			}
+		}
+
+		time.Sleep(1 * time.Minute)
+	}
+}
+
 // получает записи из Toggl и отправляет в Планфикс
 // * нужна, чтобы сохранился c.PlanfixApi.Sid при авторизации
 func (c *TogglClient) SendToPlanfix() (sumEntries []TogglPlanfixEntry, err error) {
