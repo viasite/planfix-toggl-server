@@ -7,6 +7,10 @@ mkdir -p build/dist
 # clone client
 git clone -b gh-pages https://github.com/viasite/planfix-toggl-client.git build/planfix-toggl-client
 
+# set version
+version="$(git tag | grep '^[0-9]\.' | tail -n1)"
+sed -i "s/version string/version string = \"$version\"/g" app/main.go
+
 oses="windows linux darwin"
 
 # go binaries

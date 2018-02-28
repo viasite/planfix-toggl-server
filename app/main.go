@@ -17,10 +17,10 @@ import (
 	"io/ioutil"
 )
 
-var revision string
+var version string
 
 func main() {
-	fmt.Printf("planfix-toggl %s\n", revision)
+	fmt.Printf("planfix-toggl %s\n", version)
 
 	var err error
 	cfg := config.GetConfig()
@@ -103,7 +103,7 @@ func main() {
 
 	// start server
 	server := rest.Server{
-		Version:     revision,
+		Version:     version,
 		TogglClient: togglClient,
 		Config:      cfg,
 		Logger:      dlog,
