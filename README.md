@@ -2,6 +2,8 @@
 Интеграция Planfix и Toggl, отправляет данные из Toggl в Планфикс, сделан для того, чтобы избавить людей,
 трекающих свою активность в Toggl, от ручного переноса данных в Планфикс.
 
+Вольное описание в [блоге](http://blog.popstas.ru/blog/2018/03/01/planfix-toggl-integration/), конкретное - ниже.
+
 
 
 ## Правила
@@ -27,8 +29,9 @@
 Просто запустите.
 
 Для облегчения проставления тегов в записи было дописано официальное расширение Toggl Chrome,
-скорее всего, pull request никогда не примут, можно поставить его в режиме разработчика отсюда:
-https://github.com/popstas/toggl-button
+скорее всего, pull request никогда не примут, поэтому я форкнул расширение и опубликовал, для
+[Chrome](https://chrome.google.com/webstore/detail/toggl-button-planfix-edit/hkhchfdjhfegkhkgjongbodaphidfmcl) и
+[Firefox](https://addons.mozilla.org/ru/firefox/addon/toggl-button-planfix/).
 
 Кое-какую информацию можно смотреть через веб-интерфейс на http://localhost:8096
 
