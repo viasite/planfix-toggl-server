@@ -233,37 +233,30 @@ func (c TogglClient) GetPendingEntries() ([]TogglPlanfixEntry, error) {
 
 // sendEntries отправляет toggl-записи в Планфикс и помечает их в Toggl тегом sent
 func (c TogglClient) sendEntries(planfixTaskID int, entries []TogglPlanfixEntry) error {
-	var sumDuration int64
-	for _, entry := range entries {
-		sumDuration = sumDuration + entry.Duration
-	}
-	mins := int(math.Floor(float64(sumDuration)/60000 + .5))
+	// будет точно просуммировано в одну
+	sumEntry := c.SumEntriesGroup(map[int][]TogglPlanfixEntry{
+		planfixTaskID: entries,
+	})[0]
 
-	firstEntry := entries[0]
-
+	date := sumEntry.Start.Format("2006-01-02")
+	mins := int(math.Floor(float64(sumEntry.Duration)/60000 + .5))
 	entryString := fmt.Sprintf(
 		"[%s] %s (%d)",
-		firstEntry.Project,
-		firstEntry.Description,
+		sumEntry.Project,
+		sumEntry.Description,
 		mins,
 	)
+	comment := fmt.Sprintf("toggl: %s", entryString)
+
 	c.Logger.Printf("[DEBUG] sending %s", entryString)
-
-	date := firstEntry.Start.Format("2006-01-02")
-	comment := fmt.Sprintf(
-		"toggl: [%s] %s",
-		firstEntry.Project,
-		firstEntry.Description,
-	)
-
 	if c.Config.DryRun {
-		c.Logger.Printf("[DEBUG] dry-run: send %s (%d)", comment, mins)
+		c.Logger.Println("[DEBUG] dry-run")
 		return nil
 	}
 
 	// send to planfix
 	var err error
-	if c.Config.PlanfixUserName != "" && c.Config.PlanfixUserPassword != "" {
+	if c.Config.PlanfixUserID != 0 {
 		err = c.sendWithPlanfixAPI(planfixTaskID, date, mins, comment)
 	} else {
 		err = c.sendWithSMTP(planfixTaskID, date, mins)
@@ -273,7 +266,11 @@ func (c TogglClient) sendEntries(planfixTaskID int, entries []TogglPlanfixEntry)
 		return err
 	}
 
-	// mark as sent in toggl
+	return c.markAsSent(entries)
+}
+
+// markAsSent отмечает toggl-записи тегом sent
+func (c TogglClient) markAsSent(entries []TogglPlanfixEntry) error {
 	for _, entry := range entries {
 		entryString := fmt.Sprintf(
 			"[%s] %s (%d)",
