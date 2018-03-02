@@ -1,5 +1,6 @@
 # Planfix-Toggl server
 [![Build Status](https://travis-ci.org/viasite/planfix-toggl-server.svg?branch=master)](https://travis-ci.org/viasite/planfix-toggl-server)
+[![Coverage Status](https://coveralls.io/repos/github/popstas/planfix-go/badge.svg?branch=master)](https://coveralls.io/github/popstas/planfix-go?branch=master)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/viasite/planfix-toggl-server/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/viasite/planfix-toggl-server/?branch=master)
 
 Интеграция Planfix и Toggl, отправляет данные из Toggl в Планфикс, сделан для того, чтобы избавить людей,

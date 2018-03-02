@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strconv"
 	"time"
+	"sort"
 )
 
 // данные не меняются при этой опции
@@ -114,8 +115,21 @@ func (c *TogglClient) SendToPlanfix() (sumEntries []TogglPlanfixEntry, err error
 	return c.SumEntriesGroup(grouped), nil
 }
 
+// GroupEntriesByTask объединяет плоский список toggl-записей в map c ключом - ID задачи в Планфиксе
+func (c TogglClient) GroupEntriesByTask(entries []TogglPlanfixEntry) (grouped map[int][]TogglPlanfixEntry) {
+	grouped = make(map[int][]TogglPlanfixEntry)
+	if len(entries) == 0 {
+		return grouped
+	}
+	for _, entry := range entries {
+		grouped[entry.Planfix.TaskID] = append(grouped[entry.Planfix.TaskID], entry)
+	}
+	return grouped
+}
+
 // SumEntriesGroup объединяет несколько toggl-записей в одну с просуммированным временем
-// входной map формируется через GroupEntriesByTask
+// Входной map формируется через GroupEntriesByTask
+// Ключ массива - ID задачи в Планфиксе
 func (c TogglClient) SumEntriesGroup(grouped map[int][]TogglPlanfixEntry) (summed []TogglPlanfixEntry) {
 	g := make(map[int]TogglPlanfixEntry)
 	for taskID, entries := range grouped {
@@ -130,23 +144,18 @@ func (c TogglClient) SumEntriesGroup(grouped map[int][]TogglPlanfixEntry) (summe
 		}
 	}
 
-	summed = make([]TogglPlanfixEntry, 0, len(g))
-	for _, entry := range g {
-		summed = append(summed, entry)
+	keys := make([]int, 0, len(g))
+	for k := range g {
+		keys = append(keys, k)
 	}
-	return summed
-}
+	sort.Ints(keys)
 
-// GroupEntriesByTask объединяет плоский список toggl-записей в map c ключом - ID задачи в Планфиксе
-func (c TogglClient) GroupEntriesByTask(entries []TogglPlanfixEntry) (grouped map[int][]TogglPlanfixEntry) {
-	grouped = make(map[int][]TogglPlanfixEntry)
-	if len(entries) == 0 {
-		return grouped
+	summed = make([]TogglPlanfixEntry, 0, len(g))
+	for _, taskID := range keys {
+		summed = append(summed, g[taskID])
 	}
-	for _, entry := range entries {
-		grouped[entry.Planfix.TaskID] = append(grouped[entry.Planfix.TaskID], entry)
-	}
-	return grouped
+
+	return summed
 }
 
 // GetTogglUserID возвращает ID юзера в Toggl

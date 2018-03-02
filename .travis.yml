@@ -1,10 +1,14 @@
 language: go
 go:
-- '1.10'
+  - '1.10'
 before_install:
-- go get github.com/mitchellh/gox
+  - go get github.com/mitchellh/gox
+  - go get golang.org/x/tools/cmd/cover
+  - go get github.com/mattn/goveralls
 script:
-- bash ./scripts/build-dist.sh
+  - go test -coverprofile=planfix.coverprofile ./...
+  - goveralls -coverprofile=planfix.coverprofile -service=travis-ci -repotoken $COVERALLS_TOKEN
+  - bash ./scripts/build-dist.sh
 deploy:
   provider: releases
   api_key:
