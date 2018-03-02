@@ -40,11 +40,16 @@ func getLogger(cfg config.Config) *log.Logger {
 }
 
 func parseFlags(cfg *config.Config){
+	dryRun := flag.Bool("dry-run", false, "Don't actually change data")
 	if runtime.GOOS == "windows" {
 		// Allow user to hide the console window
 		flag.BoolVar(&cfg.NoConsole, "no-console", false, "Hide console window")
 	}
 	flag.Parse()
+
+	if *dryRun {
+		cfg.DryRun = true
+	}
 }
 
 func main() {

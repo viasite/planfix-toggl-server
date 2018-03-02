@@ -22,6 +22,7 @@ type Config struct {
 	SMTPEmailFrom              string `env:"SMTP_EMAIL_FROM" yaml:"smtpEmailFrom"`
 	PlanfixAuthorName          string `env:"PLANFIX_AUTHOR_NAME" yaml:"planfixAuthorName"`
 	Debug                      bool   `env:"DEBUG" yaml:"debug"`
+	DryRun                     bool   `env:"DRY_RUN" yaml:"dryRun"`
 	PlanfixAPIKey              string `env:"PLANFIX_API_KEY" yaml:"planfixApiKey"`
 	PlanfixAPIUrl              string `env:"PLANFIX_API_URL" yaml:"planfixApiUrl"`
 	PlanfixUserName            string `env:"PLANFIX_USER_NAME" yaml:"planfixUserName"`

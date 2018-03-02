@@ -4,7 +4,8 @@ package util
 
 import "syscall"
 
-// HideConsole скрывает консоль приложения в Windows, взято из кода Syncthing
+// HideConsole скрывает консоль приложения в Windows,
+// Взято отсюда - https://github.com/syncthing/syncthing/blob/master/lib/osutil/hidden_windows.go
 func HideConsole() {
 	getConsoleWindow := syscall.NewLazyDLL("kernel32.dll").NewProc("GetConsoleWindow")
 	showWindow := syscall.NewLazyDLL("user32.dll").NewProc("ShowWindow")

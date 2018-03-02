@@ -14,7 +14,6 @@ import (
 )
 
 // данные не меняются при этой опции
-var testMode = false
 var analiticDataCached PlanfixAnaliticData
 
 // TogglClient - Клиент, общающийся с Toggl и Планфиксом
@@ -257,7 +256,8 @@ func (c TogglClient) sendEntries(planfixTaskID int, entries []TogglPlanfixEntry)
 		firstEntry.Description,
 	)
 
-	if testMode {
+	if c.Config.DryRun {
+		c.Logger.Printf("[DEBUG] dry-run: send %s (%d)", comment, mins)
 		return nil
 	}
 
