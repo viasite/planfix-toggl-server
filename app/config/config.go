@@ -13,7 +13,7 @@ type Config struct {
 	LogFile                    string `env:"LOG_FILE" yaml:"logFile"`
 	NoConsole                  bool   `env:"NO_CONSOLE" yaml:"noConsole"`
 	TogglApiToken              string `env:"TOGGL_API_TOKEN" yaml:"togglApiToken"`
-	TogglWorkspaceId           int    `env:"TOGGL_WORKSPACE_ID" yaml:"togglWorkspaceId"`
+	TogglWorkspaceID           int    `env:"TOGGL_WORKSPACE_ID" yaml:"togglWorkspaceId"`
 	TogglSentTag               string `env:"TOGGL_SENT_TAG" yaml:"togglSentTag"`
 	SmtpLogin                  string `env:"SMTP_LOGIN" yaml:"smtpLogin"`
 	SmtpPassword               string `env:"SMTP_PASSWORD" yaml:"smtpPassword"`
@@ -24,7 +24,7 @@ type Config struct {
 	PlanfixApiUrl              string `env:"PLANFIX_API_URL" yaml:"planfixApiUrl"`
 	PlanfixUserName            string `env:"PLANFIX_USER_NAME" yaml:"planfixUserName"`
 	PlanfixUserPassword        string `env:"PLANFIX_USER_PASSWORD" yaml:"planfixUserPassword"`
-	PlanfixUserId              int    `env:"PLANFIX_USER_ID" yaml:"planfixUserId"`
+	PlanfixUserID              int    `env:"PLANFIX_USER_ID" yaml:"planfixUserId"` // will get in runtime
 	PlanfixAnaliticName        string `env:"PLANFIX_ANALITIC_NAME" yaml:"planfixAnaliticName"`
 	PlanfixAnaliticTypeName    string `env:"PLANFIX_ANALITIC_TYPE_NAME" yaml:"planfixAnaliticTypeName"`
 	PlanfixAnaliticTypeValue   string `env:"PLANFIX_ANALITIC_TYPE_VALUE" yaml:"planfixAnaliticTypeValue"`

@@ -59,7 +59,7 @@ func (s Server) getEntriesCtrl(w http.ResponseWriter, r *http.Request) {
 
 	if t == "today" {
 		entries, err = s.TogglClient.GetEntries(
-			s.Config.TogglWorkspaceId,
+			s.Config.TogglWorkspaceID,
 			time.Now().Format("2006-01-02"),
 			tomorrow,
 		)
@@ -67,7 +67,7 @@ func (s Server) getEntriesCtrl(w http.ResponseWriter, r *http.Request) {
 		entries, err = s.TogglClient.GetPendingEntries()
 	} else if t == "last" {
 		entries, err = s.TogglClient.GetEntries(
-			s.Config.TogglWorkspaceId,
+			s.Config.TogglWorkspaceID,
 			time.Now().AddDate(0, 0, -30).Format("2006-01-02"),
 			tomorrow,
 		)

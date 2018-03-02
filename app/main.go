@@ -72,14 +72,14 @@ func main() {
 	planfixApi.UserAgent = "planfix-toggl"
 
 	// get user id
-	if cfg.PlanfixUserId == 0 {
+	if cfg.PlanfixUserID == 0 {
 		var user planfix.XmlResponseUserGet
 		user, err = planfixApi.UserGet(0)
 		if err != nil {
 			dlog.Printf("[ERROR] ", err.Error())
 			os.Exit(1)
 		}
-		cfg.PlanfixUserId = user.User.Id
+		cfg.PlanfixUserID = user.User.ID
 	}
 
 	// create toggl client

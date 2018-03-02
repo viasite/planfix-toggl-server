@@ -26,7 +26,7 @@ type TogglClient struct {
 
 type PlanfixEntryData struct {
 	Sent       bool `json:"sent"`
-	TaskId     int  `json:"task_id"`
+	TaskID     int  `json:"task_id"`
 	GroupCount int  `json:"group_count"`
 }
 
@@ -44,13 +44,13 @@ type TogglPlanfixEntryGroup struct {
 }
 
 type PlanfixAnaliticData struct {
-	Id          int
-	TypeId      int
-	TypeValueId int
-	CountId     int
-	CommentId   int
-	DateId      int
-	UsersId     int
+	ID          int
+	TypeID      int
+	TypeValueID int
+	CountID     int
+	CommentID   int
+	DateID      int
+	UsersID     int
 }
 
 func (c TogglClient) RunSender() {
@@ -96,12 +96,12 @@ func (c *TogglClient) SendToPlanfix() (sumEntries []TogglPlanfixEntry, err error
 	}
 	c.Logger.Printf("[INFO] found %d pending entries", len(pendingEntries))
 	grouped := c.GroupEntriesByTask(pendingEntries)
-	for taskId, entries := range grouped {
-		err := c.sendEntries(taskId, entries)
+	for taskID, entries := range grouped {
+		err := c.sendEntries(taskID, entries)
 		if err != nil {
-			c.Logger.Printf("[ERROR] entries of task #%d failed to send", taskId)
+			c.Logger.Printf("[ERROR] entries of task #%d failed to send", taskID)
 		} else {
-			c.Logger.Printf("[INFO] entries sent to https://%s.planfix.ru/task/%d", c.Config.PlanfixAccount, taskId)
+			c.Logger.Printf("[INFO] entries sent to https://%s.planfix.ru/task/%d", c.Config.PlanfixAccount, taskID)
 		}
 	}
 	return c.SumEntriesGroup(grouped), nil
@@ -109,14 +109,14 @@ func (c *TogglClient) SendToPlanfix() (sumEntries []TogglPlanfixEntry, err error
 
 func (c TogglClient) SumEntriesGroup(grouped map[int][]TogglPlanfixEntry) (summed []TogglPlanfixEntry) {
 	g := make(map[int]TogglPlanfixEntry)
-	for taskId, entries := range grouped {
+	for taskID, entries := range grouped {
 		for _, entry := range entries {
-			if ge, ok := g[taskId]; ok {
+			if ge, ok := g[taskID]; ok {
 				ge.Duration += entry.Duration
 				ge.Planfix.GroupCount += 1
-				g[entry.Planfix.TaskId] = ge
+				g[entry.Planfix.TaskID] = ge
 			} else {
-				g[entry.Planfix.TaskId] = entry
+				g[entry.Planfix.TaskID] = entry
 			}
 		}
 	}
@@ -134,7 +134,7 @@ func (c TogglClient) GroupEntriesByTask(entries []TogglPlanfixEntry) (grouped ma
 		return grouped
 	}
 	for _, entry := range entries {
-		grouped[entry.Planfix.TaskId] = append(grouped[entry.Planfix.TaskId], entry)
+		grouped[entry.Planfix.TaskID] = append(grouped[entry.Planfix.TaskID], entry)
 	}
 	return grouped
 }
@@ -148,8 +148,8 @@ func (c TogglClient) GetUserData() (account toggl.Account) {
 }
 
 // report entries with planfix data
-func (c TogglClient) GetEntries(togglWorkspaceId int, since, until string) (entries []TogglPlanfixEntry, err error) {
-	report, err := c.Session.GetDetailedReport(togglWorkspaceId, since, until, 1)
+func (c TogglClient) GetEntries(togglWorkspaceID int, since, until string) (entries []TogglPlanfixEntry, err error) {
+	report, err := c.Session.GetDetailedReport(togglWorkspaceID, since, until, 1)
 	if err != nil {
 		c.Logger.Printf("[ERROR] Toggl: %s", err)
 	}
@@ -160,7 +160,7 @@ func (c TogglClient) GetEntries(togglWorkspaceId int, since, until string) (entr
 			DetailedTimeEntry: entry,
 			Planfix: PlanfixEntryData{
 				Sent:       false,
-				TaskId:     0,
+				TaskID:     0,
 				GroupCount: 1,
 			},
 		}
@@ -169,7 +169,7 @@ func (c TogglClient) GetEntries(togglWorkspaceId int, since, until string) (entr
 			// only digit == planfix.task_id
 			regex := regexp.MustCompile(`^\d+$`)
 			if regex.MatchString(tag) {
-				pfe.Planfix.TaskId, _ = strconv.Atoi(tag)
+				pfe.Planfix.TaskID, _ = strconv.Atoi(tag)
 			}
 
 			// sent tag
@@ -196,21 +196,21 @@ func filter(input []TogglPlanfixEntry, f func(entry TogglPlanfixEntry) bool) (ou
 func (c TogglClient) GetPendingEntries() ([]TogglPlanfixEntry, error) {
 	user := c.GetUserData()
 	entries, err := c.GetEntries(
-		c.Config.TogglWorkspaceId,
+		c.Config.TogglWorkspaceID,
 		time.Now().AddDate(0, 0, -30).Format("2006-01-02"),
 		time.Now().AddDate(0, 0, 1).Format("2006-01-02"),
 	)
 	if err != nil {
 		return []TogglPlanfixEntry{}, err
 	}
-	entries = filter(entries, func(entry TogglPlanfixEntry) bool { return entry.Planfix.TaskId != 0 })
+	entries = filter(entries, func(entry TogglPlanfixEntry) bool { return entry.Planfix.TaskID != 0 })
 	entries = filter(entries, func(entry TogglPlanfixEntry) bool { return !entry.Planfix.Sent })
 	entries = filter(entries, func(entry TogglPlanfixEntry) bool { return entry.Uid == user.Data.ID })
 	return entries, nil
 }
 
 // отправка письма и пометка тегом sent в Toggl
-func (c TogglClient) sendEntries(planfixTaskId int, entries []TogglPlanfixEntry) error {
+func (c TogglClient) sendEntries(planfixTaskID int, entries []TogglPlanfixEntry) error {
 	var sumDuration int64
 	for _, entry := range entries {
 		sumDuration = sumDuration + entry.Duration
@@ -241,9 +241,9 @@ func (c TogglClient) sendEntries(planfixTaskId int, entries []TogglPlanfixEntry)
 	// send to planfix
 	var err error
 	if c.Config.PlanfixUserName != "" && c.Config.PlanfixUserPassword != "" {
-		err = c.sendWithPlanfixApi(planfixTaskId, date, mins, comment)
+		err = c.sendWithPlanfixApi(planfixTaskID, date, mins, comment)
 	} else {
-		err = c.sendWithSmtp(planfixTaskId, date, mins)
+		err = c.sendWithSmtp(planfixTaskID, date, mins)
 	}
 	if err != nil {
 		c.Logger.Printf("[ERROR] %v", err)
@@ -267,9 +267,9 @@ func (c TogglClient) sendEntries(planfixTaskId int, entries []TogglPlanfixEntry)
 	return nil
 }
 
-func (c TogglClient) sendWithSmtp(planfixTaskId int, date string, mins int) error {
+func (c TogglClient) sendWithSmtp(planfixTaskID int, date string, mins int) error {
 	auth := smtp.PlainAuth("", c.Config.SmtpLogin, c.Config.SmtpPassword, c.Config.SmtpHost)
-	taskEmail := fmt.Sprintf("task+%d@%s.planfix.ru", planfixTaskId, c.Config.PlanfixAccount)
+	taskEmail := fmt.Sprintf("task+%d@%s.planfix.ru", planfixTaskID, c.Config.PlanfixAccount)
 	testEmail := c.Config.SmtpEmailFrom
 	//test2Email := "task+530436@tagilcity.planfix.ru"
 	to := []string{taskEmail, testEmail}
@@ -295,7 +295,7 @@ func (c TogglClient) sendWithSmtp(planfixTaskId int, date string, mins int) erro
 }
 
 func (c TogglClient) getAnaliticData(name, typeName, countName, commentName, dateName, usersName string) (PlanfixAnaliticData, error) {
-	if analiticDataCached.Id != 0 { // only on first call
+	if analiticDataCached.ID != 0 { // only on first call
 		return analiticDataCached, nil
 	}
 
@@ -303,35 +303,35 @@ func (c TogglClient) getAnaliticData(name, typeName, countName, commentName, dat
 	if err != nil {
 		return PlanfixAnaliticData{}, err
 	}
-	analiticOptions, err := c.PlanfixApi.AnaliticGetOptions(analitic.Id)
+	analiticOptions, err := c.PlanfixApi.AnaliticGetOptions(analitic.ID)
 	if err != nil {
 		return PlanfixAnaliticData{}, err
 	}
 
 	analiticData := PlanfixAnaliticData{
-		Id: analitic.Id,
+		ID: analitic.ID,
 	}
 
 	for _, field := range analiticOptions.Analitic.Fields {
 		if field.Name == typeName {
-			analiticData.TypeId = field.Id
-			record, err := c.PlanfixApi.GetHandbookRecordByName(field.HandbookId, c.Config.PlanfixAnaliticTypeValue)
+			analiticData.TypeID = field.ID
+			record, err := c.PlanfixApi.GetHandbookRecordByName(field.HandbookID, c.Config.PlanfixAnaliticTypeValue)
 			if err != nil {
 				return analiticData, err
 			}
-			analiticData.TypeValueId = record.Key
+			analiticData.TypeValueID = record.Key
 		}
 		if field.Name == countName {
-			analiticData.CountId = field.Id
+			analiticData.CountID = field.ID
 		}
 		if field.Name == commentName {
-			analiticData.CommentId = field.Id
+			analiticData.CommentID = field.ID
 		}
 		if field.Name == dateName {
-			analiticData.DateId = field.Id
+			analiticData.DateID = field.ID
 		}
 		if field.Name == usersName {
-			analiticData.UsersId = field.Id
+			analiticData.UsersID = field.ID
 		}
 	}
 
@@ -339,7 +339,7 @@ func (c TogglClient) getAnaliticData(name, typeName, countName, commentName, dat
 	return analiticData, nil
 }
 
-func (c TogglClient) sendWithPlanfixApi(planfixTaskId int, date string, mins int, comment string) error {
+func (c TogglClient) sendWithPlanfixApi(planfixTaskID int, date string, mins int, comment string) error {
 	analiticData, err := c.getAnaliticData(
 		c.Config.PlanfixAnaliticName,
 		c.Config.PlanfixAnaliticTypeName,
@@ -351,23 +351,23 @@ func (c TogglClient) sendWithPlanfixApi(planfixTaskId int, date string, mins int
 	if err != nil {
 		return err
 	}
-	userIds := struct {
-		Id []int `xml:"id"`
-	}{[]int{c.Config.PlanfixUserId}}
+	userIDs := struct {
+		ID []int `xml:"id"`
+	}{[]int{c.Config.PlanfixUserID}}
 
 	_, err = c.PlanfixApi.ActionAdd(planfix.XmlRequestActionAdd{
-		TaskGeneral: planfixTaskId,
+		TaskGeneral: planfixTaskID,
 		Description: "",
 		Analitics: []planfix.XmlRequestAnalitic{
 			{
-				Id: analiticData.Id,
+				ID: analiticData.ID,
 				// аналитика должна содержать поля: вид работы, кол-во, дата, коммент, юзеры
 				ItemData: []planfix.XmlRequestAnaliticField{
-					{FieldId: analiticData.TypeId, Value: analiticData.TypeValueId}, // name
-					{FieldId: analiticData.CountId, Value: mins},                    // count, минут
-					{FieldId: analiticData.CommentId, Value: comment},               // comment
-					{FieldId: analiticData.DateId, Value: date},                     // date
-					{FieldId: analiticData.UsersId, Value: userIds},                 // user
+					{FieldID: analiticData.TypeID, Value: analiticData.TypeValueID}, // name
+					{FieldID: analiticData.CountID, Value: mins},                    // count, минут
+					{FieldID: analiticData.CommentID, Value: comment},               // comment
+					{FieldID: analiticData.DateID, Value: date},                     // date
+					{FieldID: analiticData.UsersID, Value: userIDs},                 // user
 				},
 			},
 		},
