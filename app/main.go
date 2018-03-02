@@ -58,23 +58,23 @@ func main() {
 		util.HideConsole()
 	}
 
-	planfixApi := planfix.New(
-		cfg.PlanfixApiUrl,
-		cfg.PlanfixApiKey,
+	planfixAPI := planfix.New(
+		cfg.PlanfixAPIUrl,
+		cfg.PlanfixAPIKey,
 		cfg.PlanfixAccount,
 		cfg.PlanfixUserName,
 		cfg.PlanfixUserPassword,
 	)
 	if !cfg.Debug {
-		planfixApi.Logger.SetFlags(0)
-		planfixApi.Logger.SetOutput(ioutil.Discard)
+		planfixAPI.Logger.SetFlags(0)
+		planfixAPI.Logger.SetOutput(ioutil.Discard)
 	}
-	planfixApi.UserAgent = "planfix-toggl"
+	planfixAPI.UserAgent = "planfix-toggl"
 
 	// get user id
 	if cfg.PlanfixUserID == 0 {
 		var user planfix.XmlResponseUserGet
-		user, err = planfixApi.UserGet(0)
+		user, err = planfixAPI.UserGet(0)
 		if err != nil {
 			dlog.Printf("[ERROR] ", err.Error())
 			os.Exit(1)
@@ -83,11 +83,11 @@ func main() {
 	}
 
 	// create toggl client
-	sess := toggl.OpenSession(cfg.TogglApiToken)
+	sess := toggl.OpenSession(cfg.TogglAPIToken)
 	togglClient := client.TogglClient{
 		Session:    sess,
 		Config:     cfg,
-		PlanfixApi: planfixApi,
+		PlanfixAPI: planfixAPI,
 		Logger:     dlog,
 	}
 

@@ -20,7 +20,7 @@ var analiticDataCached PlanfixAnaliticData
 type TogglClient struct {
 	Session    toggl.Session
 	Config     config.Config
-	PlanfixApi planfix.Api
+	PlanfixAPI planfix.API
 	Logger     *log.Logger
 }
 
@@ -87,7 +87,7 @@ func (c TogglClient) RunTagCleaner() {
 }
 
 // получает записи из Toggl и отправляет в Планфикс
-// * нужна, чтобы сохранился c.PlanfixApi.Sid при авторизации
+// * нужна, чтобы сохранился c.PlanfixAPI.Sid при авторизации
 func (c *TogglClient) SendToPlanfix() (sumEntries []TogglPlanfixEntry, err error) {
 	c.Logger.Println("[INFO] send to planfix")
 	pendingEntries, err := c.GetPendingEntries()
@@ -241,7 +241,7 @@ func (c TogglClient) sendEntries(planfixTaskID int, entries []TogglPlanfixEntry)
 	// send to planfix
 	var err error
 	if c.Config.PlanfixUserName != "" && c.Config.PlanfixUserPassword != "" {
-		err = c.sendWithPlanfixApi(planfixTaskID, date, mins, comment)
+		err = c.sendWithPlanfixAPI(planfixTaskID, date, mins, comment)
 	} else {
 		err = c.sendWithSmtp(planfixTaskID, date, mins)
 	}
@@ -299,11 +299,11 @@ func (c TogglClient) getAnaliticData(name, typeName, countName, commentName, dat
 		return analiticDataCached, nil
 	}
 
-	analitic, err := c.PlanfixApi.GetAnaliticByName(name)
+	analitic, err := c.PlanfixAPI.GetAnaliticByName(name)
 	if err != nil {
 		return PlanfixAnaliticData{}, err
 	}
-	analiticOptions, err := c.PlanfixApi.AnaliticGetOptions(analitic.ID)
+	analiticOptions, err := c.PlanfixAPI.AnaliticGetOptions(analitic.ID)
 	if err != nil {
 		return PlanfixAnaliticData{}, err
 	}
@@ -315,7 +315,7 @@ func (c TogglClient) getAnaliticData(name, typeName, countName, commentName, dat
 	for _, field := range analiticOptions.Analitic.Fields {
 		if field.Name == typeName {
 			analiticData.TypeID = field.ID
-			record, err := c.PlanfixApi.GetHandbookRecordByName(field.HandbookID, c.Config.PlanfixAnaliticTypeValue)
+			record, err := c.PlanfixAPI.GetHandbookRecordByName(field.HandbookID, c.Config.PlanfixAnaliticTypeValue)
 			if err != nil {
 				return analiticData, err
 			}
@@ -339,7 +339,7 @@ func (c TogglClient) getAnaliticData(name, typeName, countName, commentName, dat
 	return analiticData, nil
 }
 
-func (c TogglClient) sendWithPlanfixApi(planfixTaskID int, date string, mins int, comment string) error {
+func (c TogglClient) sendWithPlanfixAPI(planfixTaskID int, date string, mins int, comment string) error {
 	analiticData, err := c.getAnaliticData(
 		c.Config.PlanfixAnaliticName,
 		c.Config.PlanfixAnaliticTypeName,
@@ -355,7 +355,7 @@ func (c TogglClient) sendWithPlanfixApi(planfixTaskID int, date string, mins int
 		ID []int `xml:"id"`
 	}{[]int{c.Config.PlanfixUserID}}
 
-	_, err = c.PlanfixApi.ActionAdd(planfix.XmlRequestActionAdd{
+	_, err = c.PlanfixAPI.ActionAdd(planfix.XmlRequestActionAdd{
 		TaskGeneral: planfixTaskID,
 		Description: "",
 		Analitics: []planfix.XmlRequestAnalitic{
