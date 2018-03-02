@@ -66,7 +66,7 @@ func (c TogglClient) RunSender() {
 		time.Sleep(time.Duration(c.Config.SendInterval) * time.Minute)
 	}
 	tick := time.Tick(5 * time.Second)
-	for _ = range tick {
+	for range tick {
 		c.SendToPlanfix()
 	}
 }
@@ -122,7 +122,7 @@ func (c TogglClient) SumEntriesGroup(grouped map[int][]TogglPlanfixEntry) (summe
 		for _, entry := range entries {
 			if ge, ok := g[taskID]; ok {
 				ge.Duration += entry.Duration
-				ge.Planfix.GroupCount += 1
+				ge.Planfix.GroupCount++
 				g[entry.Planfix.TaskID] = ge
 			} else {
 				g[entry.Planfix.TaskID] = entry
