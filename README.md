@@ -1,4 +1,7 @@
 # Planfix-Toggl server
+[![Build Status](https://travis-ci.org/viasite/planfix-toggl-server.svg?branch=master)](https://travis-ci.org/viasite/planfix-toggl-server)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/viasite/planfix-toggl-server/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/viasite/planfix-toggl-server/?branch=master)
+
 Интеграция Planfix и Toggl, отправляет данные из Toggl в Планфикс, сделан для того, чтобы избавить людей,
 трекающих свою активность в Toggl, от ручного переноса данных в Планфикс.
 
