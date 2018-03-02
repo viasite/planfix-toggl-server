@@ -325,14 +325,14 @@ func (c TogglClient) sendWithPlanfixAPI(planfixTaskID int, date string, mins int
 		ID []int `xml:"id"`
 	}{[]int{c.Config.PlanfixUserID}}
 
-	_, err = c.PlanfixAPI.ActionAdd(planfix.XmlRequestActionAdd{
+	_, err = c.PlanfixAPI.ActionAdd(planfix.XMLRequestActionAdd{
 		TaskGeneral: planfixTaskID,
 		Description: "",
-		Analitics: []planfix.XmlRequestAnalitic{
+		Analitics: []planfix.XMLRequestAnalitic{
 			{
 				ID: analiticData.ID,
 				// аналитика должна содержать поля: вид работы, кол-во, дата, коммент, юзеры
-				ItemData: []planfix.XmlRequestAnaliticField{
+				ItemData: []planfix.XMLRequestAnaliticField{
 					{FieldID: analiticData.TypeID, Value: analiticData.TypeValueID}, // name
 					{FieldID: analiticData.CountID, Value: mins},                    // count, минут
 					{FieldID: analiticData.CommentID, Value: comment},               // comment

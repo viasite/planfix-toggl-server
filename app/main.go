@@ -73,7 +73,7 @@ func main() {
 
 	// get user id
 	if cfg.PlanfixUserID == 0 {
-		var user planfix.XmlResponseUserGet
+		var user planfix.XMLResponseUserGet
 		user, err = planfixAPI.UserGet(0)
 		if err != nil {
 			dlog.Printf("[ERROR] ", err.Error())
