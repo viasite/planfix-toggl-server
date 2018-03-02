@@ -20,7 +20,7 @@ var analiticDataCached PlanfixAnaliticData
 // TogglClient - Клиент, общающийся с Toggl и Планфиксом
 type TogglClient struct {
 	Session    toggl.Session
-	Config     config.Config
+	Config     *config.Config
 	PlanfixAPI planfix.API
 	Logger     *log.Logger
 }
@@ -60,6 +60,11 @@ type PlanfixAnaliticData struct {
 
 // RunSender - запускалка цикла отправки накопившихся toggl-записей
 func (c TogglClient) RunSender() {
+	if c.Config.SendInterval <= 0 {
+		c.Logger.Println("[INFO] No send interval, sending disabled")
+		return
+	}
+
 	time.Sleep(1 * time.Second) // wait for server start
 	for {
 		c.SendToPlanfix()
@@ -145,13 +150,23 @@ func (c TogglClient) GroupEntriesByTask(entries []TogglPlanfixEntry) (grouped ma
 	return grouped
 }
 
-// GetUserData возвращает аккаунт юзера в Toggl
-func (c TogglClient) GetUserData() (account toggl.Account) {
+// GetTogglUserID возвращает ID юзера в Toggl
+func (c TogglClient) GetTogglUserID() int {
 	account, err := c.Session.GetAccount()
 	if err != nil {
-		println("error:", err)
+		c.Logger.Fatalf("[ERROR] Failed to get Toggl UserID, check TogglAPIToken, %s", err.Error())
 	}
-	return account
+	return account.Data.ID
+}
+
+// GetPlanfixUserID возвращает ID юзера в Планфиксе
+func (c TogglClient) GetPlanfixUserID() int {
+	var user planfix.XMLResponseUserGet
+	user, err := c.PlanfixAPI.UserGet(0)
+	if err != nil {
+		c.Logger.Fatalf("[ERROR] Failed to get Planfix UserID, check PlanfixAPIKey, PlanfixAPIUrl, PlanfixUserName, PlanfixUserPassword, %s", err.Error())
+	}
+	return user.User.ID
 }
 
 // GetEntries получает []toggl.DetailedTimeEntry и превращает их в []TogglPlanfixEntry с подмешенными данными Планфикса
@@ -203,7 +218,6 @@ func filter(input []TogglPlanfixEntry, f func(entry TogglPlanfixEntry) bool) (ou
 
 // GetPendingEntries возвращает toggl-записи, которые должны быть отправлены в Планфикс
 func (c TogglClient) GetPendingEntries() ([]TogglPlanfixEntry, error) {
-	user := c.GetUserData()
 	entries, err := c.GetEntries(
 		c.Config.TogglWorkspaceID,
 		time.Now().AddDate(0, 0, -30).Format("2006-01-02"),
@@ -214,7 +228,7 @@ func (c TogglClient) GetPendingEntries() ([]TogglPlanfixEntry, error) {
 	}
 	entries = filter(entries, func(entry TogglPlanfixEntry) bool { return entry.Planfix.TaskID != 0 })
 	entries = filter(entries, func(entry TogglPlanfixEntry) bool { return !entry.Planfix.Sent })
-	entries = filter(entries, func(entry TogglPlanfixEntry) bool { return entry.Uid == user.Data.ID })
+	entries = filter(entries, func(entry TogglPlanfixEntry) bool { return entry.Uid == c.Config.TogglUserID })
 	return entries, nil
 }
 
@@ -351,6 +365,7 @@ func (c TogglClient) getAnaliticData(name, typeName, countName, commentName, dat
 	if err != nil {
 		return PlanfixAnaliticData{}, err
 	}
+
 	analiticOptions, err := c.PlanfixAPI.AnaliticGetOptions(analitic.ID)
 	if err != nil {
 		return PlanfixAnaliticData{}, err
@@ -369,16 +384,14 @@ func (c TogglClient) getAnaliticData(name, typeName, countName, commentName, dat
 			}
 			analiticData.TypeValueID = record.Key
 		}
-		if field.Name == countName {
+		switch field.Name {
+		case countName:
 			analiticData.CountID = field.ID
-		}
-		if field.Name == commentName {
+		case commentName:
 			analiticData.CommentID = field.ID
-		}
-		if field.Name == dateName {
+		case dateName:
 			analiticData.DateID = field.ID
-		}
-		if field.Name == usersName {
+		case usersName:
 			analiticData.UsersID = field.ID
 		}
 	}

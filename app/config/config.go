@@ -15,6 +15,7 @@ type Config struct {
 	NoConsole                  bool   `env:"NO_CONSOLE" yaml:"noConsole"`
 	TogglAPIToken              string `env:"TOGGL_API_TOKEN" yaml:"togglApiToken"`
 	TogglWorkspaceID           int    `env:"TOGGL_WORKSPACE_ID" yaml:"togglWorkspaceId"`
+	TogglUserID                int    `env:"TOGGL_USER_ID" yaml:"togglUserId"`// will get in runtime
 	TogglSentTag               string `env:"TOGGL_SENT_TAG" yaml:"togglSentTag"`
 	SMTPLogin                  string `env:"SMTP_LOGIN" yaml:"smtpLogin"`
 	SMTPPassword               string `env:"SMTP_PASSWORD" yaml:"smtpPassword"`
