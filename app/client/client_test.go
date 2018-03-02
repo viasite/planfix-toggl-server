@@ -1,10 +1,8 @@
-package client_test
+package client
 
 import (
 	"testing"
-	"github.com/viasite/planfix-toggl-server/app/client"
 	"log"
-	"os"
 	"github.com/viasite/planfix-toggl-server/app/config"
 	"github.com/popstas/planfix-go/planfix"
 	"net/http/httptest"
@@ -13,7 +11,12 @@ import (
 	"encoding/xml"
 	"github.com/popstas/go-toggl"
 	"reflect"
+	"time"
+	"bytes"
+	"strings"
 )
+
+var output bytes.Buffer
 
 func assert(t *testing.T, data interface{}, expected interface{}) {
 	if data != expected {
@@ -62,50 +65,79 @@ func (s *MockedServer) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	resp.Write([]byte(answer))
 }
 
-func newClient() client.TogglClient {
+func newClient() TogglClient {
 	cfg := config.Config{}
 	ms := NewMockedServer([]string{""})
 	api := planfix.New(ms.URL, "apiKey", "account", "user", "password")
 	api.Sid = "123"
 
-	return client.TogglClient{
+	return TogglClient{
 		Session:    toggl.OpenSession(cfg.TogglAPIToken),
 		Config:     &cfg,
 		PlanfixAPI: api,
-		Logger:     log.New(os.Stderr, "", log.LstdFlags),
+		Logger:     log.New(&output, "", log.LstdFlags),
 	}
 }
 
-func getGroupedEntries() map[int][]client.TogglPlanfixEntry {
-	return map[int][]client.TogglPlanfixEntry{
+func getTestEntries() []TogglPlanfixEntry {
+	return []TogglPlanfixEntry{
+		{
+			toggl.DetailedTimeEntry{Duration: 1},
+			PlanfixEntryData{TaskID: 1, GroupCount: 1},
+		},
+		{
+			toggl.DetailedTimeEntry{Duration: 2},
+			PlanfixEntryData{TaskID: 1, GroupCount: 1},
+		},
+		{
+			toggl.DetailedTimeEntry{Duration: 3},
+			PlanfixEntryData{TaskID: 2, GroupCount: 1},
+		},
+		{
+			toggl.DetailedTimeEntry{Duration: 4},
+			PlanfixEntryData{TaskID: 2, GroupCount: 1},
+		},
+		{
+			toggl.DetailedTimeEntry{Duration: 5},
+			PlanfixEntryData{TaskID: 2, GroupCount: 1},
+		},
+		{
+			toggl.DetailedTimeEntry{Duration: 6},
+			PlanfixEntryData{TaskID: 3, GroupCount: 1},
+		},
+	}
+}
+
+func getTestGroupedEntries() map[int][]TogglPlanfixEntry {
+	return map[int][]TogglPlanfixEntry{
 		1: {
 			{
 				toggl.DetailedTimeEntry{Duration: 1},
-				client.PlanfixEntryData{TaskID: 1, GroupCount: 1},
+				PlanfixEntryData{TaskID: 1, GroupCount: 1},
 			},
 			{
 				toggl.DetailedTimeEntry{Duration: 2},
-				client.PlanfixEntryData{TaskID: 1, GroupCount: 1},
+				PlanfixEntryData{TaskID: 1, GroupCount: 1},
 			},
 		},
 		2: {
 			{
 				toggl.DetailedTimeEntry{Duration: 3},
-				client.PlanfixEntryData{TaskID: 2, GroupCount: 1},
+				PlanfixEntryData{TaskID: 2, GroupCount: 1},
 			},
 			{
 				toggl.DetailedTimeEntry{Duration: 4},
-				client.PlanfixEntryData{TaskID: 2, GroupCount: 1},
+				PlanfixEntryData{TaskID: 2, GroupCount: 1},
 			},
 			{
 				toggl.DetailedTimeEntry{Duration: 5},
-				client.PlanfixEntryData{TaskID: 2, GroupCount: 1},
+				PlanfixEntryData{TaskID: 2, GroupCount: 1},
 			},
 		},
 		3: {
 			{
 				toggl.DetailedTimeEntry{Duration: 6},
-				client.PlanfixEntryData{TaskID: 3, GroupCount: 1},
+				PlanfixEntryData{TaskID: 3, GroupCount: 1},
 			},
 		},
 	}
@@ -113,19 +145,19 @@ func getGroupedEntries() map[int][]client.TogglPlanfixEntry {
 
 func TestTogglClient_SumEntriesGroup(t *testing.T) {
 	c := newClient()
-	groupedEntries := getGroupedEntries()
-	expected := []client.TogglPlanfixEntry{
+	groupedEntries := getTestGroupedEntries()
+	expected := []TogglPlanfixEntry{
 		{
 			toggl.DetailedTimeEntry{Duration: 3},
-			client.PlanfixEntryData{TaskID: 1, GroupCount: 2},
+			PlanfixEntryData{TaskID: 1, GroupCount: 2},
 		},
 		{
 			toggl.DetailedTimeEntry{Duration: 12},
-			client.PlanfixEntryData{TaskID: 2, GroupCount: 3},
+			PlanfixEntryData{TaskID: 2, GroupCount: 3},
 		},
 		{
 			toggl.DetailedTimeEntry{Duration: 6},
-			client.PlanfixEntryData{TaskID: 3, GroupCount: 1},
+			PlanfixEntryData{TaskID: 3, GroupCount: 1},
 		},
 	}
 
@@ -136,35 +168,45 @@ func TestTogglClient_SumEntriesGroup(t *testing.T) {
 
 func TestTogglClient_GroupEntriesByTask(t *testing.T) {
 	c := newClient()
-	entries := []client.TogglPlanfixEntry{
-		{
-			toggl.DetailedTimeEntry{Duration: 1},
-			client.PlanfixEntryData{TaskID: 1, GroupCount: 1},
-		},
-		{
-			toggl.DetailedTimeEntry{Duration: 2},
-			client.PlanfixEntryData{TaskID: 1, GroupCount: 1},
-		},
-		{
-			toggl.DetailedTimeEntry{Duration: 3},
-			client.PlanfixEntryData{TaskID: 2, GroupCount: 1},
-		},
-		{
-			toggl.DetailedTimeEntry{Duration: 4},
-			client.PlanfixEntryData{TaskID: 2, GroupCount: 1},
-		},
-		{
-			toggl.DetailedTimeEntry{Duration: 5},
-			client.PlanfixEntryData{TaskID: 2, GroupCount: 1},
-		},
-		{
-			toggl.DetailedTimeEntry{Duration: 6},
-			client.PlanfixEntryData{TaskID: 3, GroupCount: 1},
-		},
-	}
-	expected := getGroupedEntries()
+	entries := getTestEntries()
+	expected := getTestGroupedEntries()
 
 	grouped := c.GroupEntriesByTask(entries)
 	equals := reflect.DeepEqual(grouped, expected)
 	assert(t, equals, true)
+}
+
+func TestTogglClient_GroupEntriesByTask_empty(t *testing.T) {
+	c := newClient()
+	entries := []TogglPlanfixEntry{}
+	expected := map[int][]TogglPlanfixEntry{}
+
+	grouped := c.GroupEntriesByTask(entries)
+	equals := reflect.DeepEqual(grouped, expected)
+	assert(t, equals, true)
+}
+
+func TestTogglClient_sendEntries_dryRun(t *testing.T) {
+	c := newClient()
+	c.Config.DryRun = true
+	now := time.Now()
+	entries := []TogglPlanfixEntry{
+		{
+			toggl.DetailedTimeEntry{
+				Duration:    60000,
+				Start:       &now,
+				Project:     "project",
+				Description: "description",
+			},
+			PlanfixEntryData{TaskID: 1, GroupCount: 1},
+		},
+		{
+			toggl.DetailedTimeEntry{Duration: 120000},
+			PlanfixEntryData{TaskID: 1, GroupCount: 1},
+		},
+	}
+
+	c.sendEntries(1, entries)
+	assert(t, strings.Contains(output.String(), "[DEBUG] sending [project] description (3)"), true)
+	assert(t, strings.Contains(output.String(), "[DEBUG] dry-run"), true)
 }
