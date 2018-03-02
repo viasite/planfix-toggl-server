@@ -358,11 +358,13 @@ func (c TogglClient) getAnaliticData(name, typeName, countName, commentName, dat
 		return analiticDataCached, nil
 	}
 
+	// получение аналитики
 	analitic, err := c.PlanfixAPI.GetAnaliticByName(name)
 	if err != nil {
 		return PlanfixAnaliticData{}, err
 	}
 
+	// получение полей аналитики
 	analiticOptions, err := c.PlanfixAPI.AnaliticGetOptions(analitic.ID)
 	if err != nil {
 		return PlanfixAnaliticData{}, err
@@ -372,16 +374,17 @@ func (c TogglClient) getAnaliticData(name, typeName, countName, commentName, dat
 		ID: analitic.ID,
 	}
 
+	// получение ID полей по их названиям
 	for _, field := range analiticOptions.Analitic.Fields {
-		if field.Name == typeName {
+		switch field.Name {
+		case typeName:
 			analiticData.TypeID = field.ID
+			// получение ID записи справочника
 			record, err := c.PlanfixAPI.GetHandbookRecordByName(field.HandbookID, c.Config.PlanfixAnaliticTypeValue)
 			if err != nil {
 				return analiticData, err
 			}
 			analiticData.TypeValueID = record.Key
-		}
-		switch field.Name {
 		case countName:
 			analiticData.CountID = field.ID
 		case commentName:
