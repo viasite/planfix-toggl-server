@@ -256,7 +256,7 @@ func (c TogglClient) sendEntries(planfixTaskID int, entries []TogglPlanfixEntry)
 	if c.Config.PlanfixUserName != "" && c.Config.PlanfixUserPassword != "" {
 		err = c.sendWithPlanfixAPI(planfixTaskID, date, mins, comment)
 	} else {
-		err = c.sendWithSmtp(planfixTaskID, date, mins)
+		err = c.sendWithSMTP(planfixTaskID, date, mins)
 	}
 	if err != nil {
 		c.Logger.Printf("[ERROR] %v", err)
@@ -280,11 +280,11 @@ func (c TogglClient) sendEntries(planfixTaskID int, entries []TogglPlanfixEntry)
 	return nil
 }
 
-// sendWithSmtp отправляет toggl-запись через SMTP
-func (c TogglClient) sendWithSmtp(planfixTaskID int, date string, mins int) error {
-	auth := smtp.PlainAuth("", c.Config.SmtpLogin, c.Config.SmtpPassword, c.Config.SmtpHost)
+// sendWithSMTP отправляет toggl-запись через SMTP
+func (c TogglClient) sendWithSMTP(planfixTaskID int, date string, mins int) error {
+	auth := smtp.PlainAuth("", c.Config.SMTPLogin, c.Config.SMTPPassword, c.Config.SMTPHost)
 	taskEmail := fmt.Sprintf("task+%d@%s.planfix.ru", planfixTaskID, c.Config.PlanfixAccount)
-	testEmail := c.Config.SmtpEmailFrom
+	testEmail := c.Config.SMTPEmailFrom
 	//test2Email := "task+530436@tagilcity.planfix.ru"
 	to := []string{taskEmail, testEmail}
 	body := fmt.Sprintf(
@@ -297,7 +297,7 @@ func (c TogglClient) sendWithSmtp(planfixTaskID int, date string, mins int) erro
 			"time: %d\r\n"+
 			"Автор: %s\r\n"+
 			"Дата: %s\r\n",
-		c.Config.SmtpEmailFrom,
+		c.Config.SMTPEmailFrom,
 		taskEmail,
 		c.Config.PlanfixAnaliticTypeValue,
 		mins,
@@ -305,7 +305,7 @@ func (c TogglClient) sendWithSmtp(planfixTaskID int, date string, mins int) erro
 		date,
 	)
 	msg := []byte(body)
-	return smtp.SendMail(fmt.Sprintf("%s:%d", c.Config.SmtpHost, c.Config.SmtpPort), auth, c.Config.SmtpEmailFrom, to, msg)
+	return smtp.SendMail(fmt.Sprintf("%s:%d", c.Config.SMTPHost, c.Config.SMTPPort), auth, c.Config.SMTPEmailFrom, to, msg)
 }
 
 // sendWithPlanfixAPI отправляет toggl-запись через Планфикс API

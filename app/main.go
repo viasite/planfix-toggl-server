@@ -42,7 +42,7 @@ func main() {
 		dlog.SetOutput(mw)
 	}
 
-	if cfg.SmtpSecure {
+	if cfg.SMTPSecure {
 		err := "[ERROR] Secure SMTP not implemented"
 		dlog.Fatal(err)
 		os.Exit(1)

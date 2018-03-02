@@ -6,9 +6,9 @@ import (
 
 // Config - структура с конфигом приложения
 type Config struct {
-	SmtpHost                   string `env:"SMTP_HOST" yaml:"smtpHost"`
-	SmtpPort                   int    `env:"SMTP_PORT" yaml:"smtpPort"`
-	SmtpSecure                 bool   `env:"SMTP_SECURE" yaml:"smtpSecure"`
+	SMTPHost                   string `env:"SMTP_HOST" yaml:"smtpHost"`
+	SMTPPort                   int    `env:"SMTP_PORT" yaml:"smtpPort"`
+	SMTPSecure                 bool   `env:"SMTP_SECURE" yaml:"smtpSecure"`
 	PlanfixAccount             string `env:"PLANFIX_ACCOUNT" yaml:"planfixAccount"`
 	SendInterval               int    `env:"SEND_INTERVAL" yaml:"sendInterval"`
 	LogFile                    string `env:"LOG_FILE" yaml:"logFile"`
@@ -16,9 +16,9 @@ type Config struct {
 	TogglAPIToken              string `env:"TOGGL_API_TOKEN" yaml:"togglApiToken"`
 	TogglWorkspaceID           int    `env:"TOGGL_WORKSPACE_ID" yaml:"togglWorkspaceId"`
 	TogglSentTag               string `env:"TOGGL_SENT_TAG" yaml:"togglSentTag"`
-	SmtpLogin                  string `env:"SMTP_LOGIN" yaml:"smtpLogin"`
-	SmtpPassword               string `env:"SMTP_PASSWORD" yaml:"smtpPassword"`
-	SmtpEmailFrom              string `env:"SMTP_EMAIL_FROM" yaml:"smtpEmailFrom"`
+	SMTPLogin                  string `env:"SMTP_LOGIN" yaml:"smtpLogin"`
+	SMTPPassword               string `env:"SMTP_PASSWORD" yaml:"smtpPassword"`
+	SMTPEmailFrom              string `env:"SMTP_EMAIL_FROM" yaml:"smtpEmailFrom"`
 	PlanfixAuthorName          string `env:"PLANFIX_AUTHOR_NAME" yaml:"planfixAuthorName"`
 	Debug                      bool   `env:"DEBUG" yaml:"debug"`
 	PlanfixAPIKey              string `env:"PLANFIX_API_KEY" yaml:"planfixApiKey"`
