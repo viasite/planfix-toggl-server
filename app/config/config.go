@@ -4,6 +4,7 @@ import (
 	"github.com/jinzhu/configor"
 )
 
+// Config - структура с конфигом приложения
 type Config struct {
 	SmtpHost                   string `env:"SMTP_HOST" yaml:"smtpHost"`
 	SmtpPort                   int    `env:"SMTP_PORT" yaml:"smtpPort"`
@@ -34,6 +35,7 @@ type Config struct {
 	PlanfixAnaliticUsersName   string `env:"PLANFIX_ANALITIC_USERS_NAME" yaml:"planfixAnaliticUsersName"`
 }
 
+// GetConfig читает конфиг из файлов и возвращает структуру
 func GetConfig() (cfg Config) {
 	configor.Load(&cfg, "config.yml", "config.default.yml")
 	return cfg
