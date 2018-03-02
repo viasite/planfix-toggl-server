@@ -1,16 +1,16 @@
 package client
 
 import (
-	"github.com/popstas/go-toggl"
 	"fmt"
+	"github.com/popstas/go-toggl"
+	"github.com/popstas/planfix-go/planfix"
 	"github.com/viasite/planfix-toggl-server/app/config"
-	"math"
 	"log"
+	"math"
+	"net/smtp"
 	"regexp"
 	"strconv"
-	"net/smtp"
 	"time"
-	"github.com/popstas/planfix-go/planfix"
 )
 
 // данные не меняются при этой опции
@@ -149,7 +149,7 @@ func (c TogglClient) GetUserData() (account toggl.Account) {
 
 // report entries with planfix data
 func (c TogglClient) GetEntries(togglWorkspaceId int, since, until string) (entries []TogglPlanfixEntry, err error) {
-	report, err := c.Session.GetDetailedReport(togglWorkspaceId, since, until, 1);
+	report, err := c.Session.GetDetailedReport(togglWorkspaceId, since, until, 1)
 	if err != nil {
 		c.Logger.Printf("[ERROR] Toggl: %s", err)
 	}
@@ -210,7 +210,7 @@ func (c TogglClient) GetPendingEntries() ([]TogglPlanfixEntry, error) {
 }
 
 // отправка письма и пометка тегом sent в Toggl
-func (c TogglClient) sendEntries(planfixTaskId int, entries []TogglPlanfixEntry) (error) {
+func (c TogglClient) sendEntries(planfixTaskId int, entries []TogglPlanfixEntry) error {
 	var sumDuration int64
 	for _, entry := range entries {
 		sumDuration = sumDuration + entry.Duration

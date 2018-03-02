@@ -1,20 +1,20 @@
 package main
 
 import (
-	"os"
 	"fmt"
-	"log"
 	"io"
+	"log"
+	"os"
 
-	"github.com/viasite/planfix-toggl-server/app/config"
+	"flag"
 	"github.com/popstas/go-toggl"
+	"github.com/popstas/planfix-go/planfix"
 	"github.com/viasite/planfix-toggl-server/app/client"
+	"github.com/viasite/planfix-toggl-server/app/config"
 	"github.com/viasite/planfix-toggl-server/app/rest"
 	"github.com/viasite/planfix-toggl-server/app/util"
-	"github.com/popstas/planfix-go/planfix"
-	"flag"
-	"runtime"
 	"io/ioutil"
+	"runtime"
 )
 
 var version string
@@ -42,7 +42,7 @@ func main() {
 		dlog.SetOutput(mw)
 	}
 
-	if (cfg.SmtpSecure) {
+	if cfg.SmtpSecure {
 		err := "[ERROR] Secure SMTP not implemented"
 		dlog.Fatal(err)
 		os.Exit(1)
@@ -88,7 +88,7 @@ func main() {
 		Session:    sess,
 		Config:     cfg,
 		PlanfixApi: planfixApi,
-		Logger:      dlog,
+		Logger:     dlog,
 	}
 
 	// start tag cleaner

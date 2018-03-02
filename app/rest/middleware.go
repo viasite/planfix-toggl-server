@@ -72,7 +72,7 @@ type LoggerFlag int
 
 // logger flags enum
 const (
-	LogAll  LoggerFlag = iota
+	LogAll LoggerFlag = iota
 	LogBody
 )
 const maxBody = 1024
