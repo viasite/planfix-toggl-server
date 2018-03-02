@@ -35,7 +35,7 @@ func main() {
 	if cfg.LogFile != "" {
 		f, err := os.OpenFile(cfg.LogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 		if err != nil {
-			dlog.Fatalf("[ERROR] No send interval, sending disabled", cfg.LogFile)
+			dlog.Fatalf("[ERROR] Failed to open log file: %s", cfg.LogFile)
 		}
 		defer f.Close()
 		mw := io.MultiWriter(os.Stdout, f)
@@ -76,7 +76,7 @@ func main() {
 		var user planfix.XMLResponseUserGet
 		user, err = planfixAPI.UserGet(0)
 		if err != nil {
-			dlog.Printf("[ERROR] ", err.Error())
+			dlog.Printf("[ERROR] %v", err.Error())
 			os.Exit(1)
 		}
 		cfg.PlanfixUserID = user.User.ID

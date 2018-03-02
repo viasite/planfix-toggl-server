@@ -35,7 +35,7 @@ type Config struct {
 	PlanfixAnaliticUsersName   string `env:"PLANFIX_ANALITIC_USERS_NAME" yaml:"planfixAnaliticUsersName"`
 }
 
-// GetConfig читает конфиг из файлов и возвращает структуру
+// - GetConfig читает конфиг из файлов и возвращает структуру
 func GetConfig() (cfg Config) {
 	configor.Load(&cfg, "config.yml", "config.default.yml")
 	return cfg

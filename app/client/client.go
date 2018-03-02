@@ -65,10 +65,6 @@ func (c TogglClient) RunSender() {
 		c.SendToPlanfix()
 		time.Sleep(time.Duration(c.Config.SendInterval) * time.Minute)
 	}
-	tick := time.Tick(5 * time.Second)
-	for range tick {
-		c.SendToPlanfix()
-	}
 }
 
 // RunTagCleaner - запускалка цикла очистки запущенных toggl-записей от тега sent
