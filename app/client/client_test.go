@@ -14,25 +14,11 @@ import (
 	"time"
 	"bytes"
 	"strings"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 var output bytes.Buffer
-
-func assert(t *testing.T, data interface{}, expected interface{}) {
-	if data != expected {
-		t.Errorf("Expected %v, got, %v", expected, data)
-	}
-}
-func expectError(t *testing.T, err error, msg string) {
-	if err == nil {
-		t.Errorf("Expected error, got success %v", msg)
-	}
-}
-func expectSuccess(t *testing.T, err error, msg string) {
-	if err != nil {
-		t.Errorf("Expected success, got %v %v", err, msg)
-	}
-}
 
 type planfixRequestStruct struct {
 	XMLName xml.Name `xml:"request"`
@@ -81,33 +67,18 @@ func (s *MockedServer) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 }
 
 type MockedTogglSession struct {
+	mock.Mock
 	TogglSession
 }
 
 func (s *MockedTogglSession) GetAccount() (toggl.Account, error) {
-	return toggl.Account{Data: struct {
-		APIToken        string            `json:"api_token"`
-		Timezone        string            `json:"timezone"`
-		ID              int               `json:"id"`
-		Workspaces      []toggl.Workspace `json:"workspaces"`
-		Clients         []toggl.Client    `json:"clients"`
-		Projects        []toggl.Project   `json:"projects"`
-		Tasks           []toggl.Task      `json:"tasks"`
-		Tags            []toggl.Tag       `json:"tags"`
-		TimeEntries     []toggl.TimeEntry `json:"time_entries"`
-		BeginningOfWeek int               `json:"beginning_of_week"`
-	}{ID: 123}}, nil
+	args := s.Called()
+	return args.Get(0).(toggl.Account), args.Error(1)
 }
 
 func (s *MockedTogglSession) GetDetailedReport(workspace int, since, until string, page int) (toggl.DetailedReport, error) {
-	return toggl.DetailedReport{Data:[]toggl.DetailedTimeEntry{
-		{
-			ID: 1,
-			Project: "project1",
-			Description: "description1",
-			Tags: []string{"12345", "sent"},
-		},
-	}}, nil
+	args := s.Called(workspace, since, until, page)
+	return args.Get(0).(toggl.DetailedReport), args.Error(1)
 }
 
 func newClient() TogglClient {
@@ -117,9 +88,9 @@ func newClient() TogglClient {
 	api := planfix.New("", "apiKey", "account", "user", "password")
 	api.Sid = "123"
 
-	sess := MockedTogglSession{}
+	sess := &MockedTogglSession{}
 	return TogglClient{
-		Session:    &sess,
+		Session:    sess,
 		Config:     &cfg,
 		PlanfixAPI: api,
 		Logger:     log.New(&output, "", log.LstdFlags),
@@ -210,7 +181,7 @@ func TestTogglClient_SumEntriesGroup(t *testing.T) {
 
 	summed := c.SumEntriesGroup(groupedEntries)
 	equals := reflect.DeepEqual(summed, expected)
-	assert(t, equals, true)
+	assert.Equal(t, equals, true)
 }
 
 func TestTogglClient_GroupEntriesByTask(t *testing.T) {
@@ -220,7 +191,7 @@ func TestTogglClient_GroupEntriesByTask(t *testing.T) {
 
 	grouped := c.GroupEntriesByTask(entries)
 	equals := reflect.DeepEqual(grouped, expected)
-	assert(t, equals, true)
+	assert.Equal(t, equals, true)
 }
 
 func TestTogglClient_GroupEntriesByTask_empty(t *testing.T) {
@@ -230,7 +201,7 @@ func TestTogglClient_GroupEntriesByTask_empty(t *testing.T) {
 
 	grouped := c.GroupEntriesByTask(entries)
 	equals := reflect.DeepEqual(grouped, expected)
-	assert(t, equals, true)
+	assert.Equal(t, equals, true)
 }
 
 func TestTogglClient_sendEntries_dryRun(t *testing.T) {
@@ -254,14 +225,31 @@ func TestTogglClient_sendEntries_dryRun(t *testing.T) {
 	}
 
 	c.sendEntries(1, entries)
-	assert(t, strings.Contains(output.String(), "[DEBUG] sending [project] description (3)"), true)
-	assert(t, strings.Contains(output.String(), "[DEBUG] dry-run"), true)
+	assert.Equal(t, strings.Contains(output.String(), "[DEBUG] sending [project] description (3)"), true)
+	assert.Equal(t, strings.Contains(output.String(), "[DEBUG] dry-run"), true)
 }
 
 func TestTogglClient_GetTogglUserID(t *testing.T) {
 	c := newClient()
+	sess := &MockedTogglSession{}
+	c.Session = sess
+
+	togglUser := toggl.Account{Data: struct {
+		APIToken        string            `json:"api_token"`
+		Timezone        string            `json:"timezone"`
+		ID              int               `json:"id"`
+		Workspaces      []toggl.Workspace `json:"workspaces"`
+		Clients         []toggl.Client    `json:"clients"`
+		Projects        []toggl.Project   `json:"projects"`
+		Tasks           []toggl.Task      `json:"tasks"`
+		Tags            []toggl.Tag       `json:"tags"`
+		TimeEntries     []toggl.TimeEntry `json:"time_entries"`
+		BeginningOfWeek int               `json:"beginning_of_week"`
+	}{ID: 123}}
+	sess.On("GetAccount").Return(togglUser, nil)
+
 	togglUserID := c.GetTogglUserID()
-	assert(t, togglUserID, 123)
+	assert.Equal(t, togglUserID, 123)
 }
 
 func TestTogglClient_GetPlanfixUserID(t *testing.T) {
@@ -273,23 +261,29 @@ func TestTogglClient_GetPlanfixUserID(t *testing.T) {
 	c.PlanfixAPI.URL = ms.URL
 
 	planfixUserID := c.GetPlanfixUserID()
-	assert(t, planfixUserID, 9230)
+	assert.Equal(t, planfixUserID, 9230)
 }
 
 func TestTogglClient_GetEntries(t *testing.T) {
 	c := newClient()
-	entries, err := c.GetEntries(
-		c.Config.TogglWorkspaceID,
-		time.Now().AddDate(0, 0, -30).Format("2006-01-02"),
-		time.Now().AddDate(0, 0, 1).Format("2006-01-02"),
-	)
+	sess := &MockedTogglSession{}
+	c.Session = sess
 
-	report, err := c.Session.GetDetailedReport(
-		c.Config.TogglWorkspaceID,
-		time.Now().AddDate(0, 0, -30).Format("2006-01-02"),
-		time.Now().AddDate(0, 0, 1).Format("2006-01-02"),
-		1,
-	)
+	since := time.Now().AddDate(0, 0, -30).Format("2006-01-02")
+	until := time.Now().AddDate(0, 0, 1).Format("2006-01-02")
+	report := toggl.DetailedReport{Data:[]toggl.DetailedTimeEntry{
+		{
+			ID: 1,
+			Project: "project1",
+			Description: "description1",
+			Tags: []string{"12345", "sent"},
+		},
+	}}
+
+	sess.On("GetDetailedReport", 234, since, until, 1).Return(report, nil)
+
+	report, _ = c.Session.GetDetailedReport(234, since, until, 1)
+	entries, _ := c.GetEntries(234, since, until)
 
 	expected := []TogglPlanfixEntry{
 		{
@@ -297,7 +291,5 @@ func TestTogglClient_GetEntries(t *testing.T) {
 			Planfix: PlanfixEntryData{GroupCount:1, Sent:true, TaskID:12345},
 		},
 	}
-	equals := reflect.DeepEqual(entries, expected)
-	expectSuccess(t, err, "TestTogglClient_GetEntries")
-	assert(t, equals, true)
+	assert.Equal(t, entries, expected)
 }
