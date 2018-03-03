@@ -86,8 +86,9 @@ func main() {
 	planfixAPI.UserAgent = "planfix-toggl"
 
 	// create toggl client
+	sess := toggl.OpenSession(cfg.TogglAPIToken)
 	togglClient := client.TogglClient{
-		Session:    toggl.OpenSession(cfg.TogglAPIToken),
+		Session:    &sess,
 		Config:     &cfg,
 		PlanfixAPI: planfixAPI,
 		Logger:     logger,

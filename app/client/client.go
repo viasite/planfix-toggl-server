@@ -14,12 +14,19 @@ import (
 	"sort"
 )
 
+type TogglSession interface {
+	GetAccount() (toggl.Account, error)
+	AddRemoveTag(entryID int, tag string, add bool) (toggl.TimeEntry, error)
+	GetCurrentTimeEntry() (toggl.TimeEntry, error)
+	GetDetailedReport(workspace int, since, until string, page int) (toggl.DetailedReport, error)
+}
+
 // данные не меняются при этой опции
 var analiticDataCached PlanfixAnaliticData
 
 // TogglClient - Клиент, общающийся с Toggl и Планфиксом
 type TogglClient struct {
-	Session    toggl.Session
+	Session    TogglSession
 	Config     *config.Config
 	PlanfixAPI planfix.API
 	Logger     *log.Logger
