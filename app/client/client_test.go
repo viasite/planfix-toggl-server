@@ -23,12 +23,27 @@ func assert(t *testing.T, data interface{}, expected interface{}) {
 		t.Errorf("Expected %v, got, %v", expected, data)
 	}
 }
+func expectError(t *testing.T, err error, msg string) {
+	if err == nil {
+		t.Errorf("Expected error, got success %v", msg)
+	}
+}
+func expectSuccess(t *testing.T, err error, msg string) {
+	if err != nil {
+		t.Errorf("Expected success, got %v %v", err, msg)
+	}
+}
 
 type planfixRequestStruct struct {
 	XMLName xml.Name `xml:"request"`
 	Method  string   `xml:"method,attr"`
 	Account string   `xml:"account"`
 	Sid     string   `xml:"sid"`
+}
+
+func fixtureFromFile(fixtureName string) string {
+	buf, _ := ioutil.ReadFile("../../tests/fixtures/" + fixtureName)
+	return string(buf)
 }
 
 type MockedServer struct {
@@ -65,14 +80,46 @@ func (s *MockedServer) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	resp.Write([]byte(answer))
 }
 
+type MockedTogglSession struct {
+	TogglSession
+}
+
+func (s *MockedTogglSession) GetAccount() (toggl.Account, error) {
+	return toggl.Account{Data: struct {
+		APIToken        string            `json:"api_token"`
+		Timezone        string            `json:"timezone"`
+		ID              int               `json:"id"`
+		Workspaces      []toggl.Workspace `json:"workspaces"`
+		Clients         []toggl.Client    `json:"clients"`
+		Projects        []toggl.Project   `json:"projects"`
+		Tasks           []toggl.Task      `json:"tasks"`
+		Tags            []toggl.Tag       `json:"tags"`
+		TimeEntries     []toggl.TimeEntry `json:"time_entries"`
+		BeginningOfWeek int               `json:"beginning_of_week"`
+	}{ID: 123}}, nil
+}
+
+func (s *MockedTogglSession) GetDetailedReport(workspace int, since, until string, page int) (toggl.DetailedReport, error) {
+	return toggl.DetailedReport{Data:[]toggl.DetailedTimeEntry{
+		{
+			ID: 1,
+			Project: "project1",
+			Description: "description1",
+			Tags: []string{"12345", "sent"},
+		},
+	}}, nil
+}
+
 func newClient() TogglClient {
-	cfg := config.Config{}
-	ms := NewMockedServer([]string{""})
-	api := planfix.New(ms.URL, "apiKey", "account", "user", "password")
+	cfg := config.Config{
+		TogglSentTag:"sent",
+	}
+	api := planfix.New("", "apiKey", "account", "user", "password")
 	api.Sid = "123"
 
+	sess := MockedTogglSession{}
 	return TogglClient{
-		Session:    toggl.OpenSession(cfg.TogglAPIToken),
+		Session:    &sess,
 		Config:     &cfg,
 		PlanfixAPI: api,
 		Logger:     log.New(&output, "", log.LstdFlags),
@@ -209,4 +256,48 @@ func TestTogglClient_sendEntries_dryRun(t *testing.T) {
 	c.sendEntries(1, entries)
 	assert(t, strings.Contains(output.String(), "[DEBUG] sending [project] description (3)"), true)
 	assert(t, strings.Contains(output.String(), "[DEBUG] dry-run"), true)
+}
+
+func TestTogglClient_GetTogglUserID(t *testing.T) {
+	c := newClient()
+	togglUserID := c.GetTogglUserID()
+	assert(t, togglUserID, 123)
+}
+
+func TestTogglClient_GetPlanfixUserID(t *testing.T) {
+	c := newClient()
+	ms := NewMockedServer([]string{
+		fixtureFromFile("user.get.xml"),
+		//fixtureFromFile("error.xml"),
+	})
+	c.PlanfixAPI.URL = ms.URL
+
+	planfixUserID := c.GetPlanfixUserID()
+	assert(t, planfixUserID, 9230)
+}
+
+func TestTogglClient_GetEntries(t *testing.T) {
+	c := newClient()
+	entries, err := c.GetEntries(
+		c.Config.TogglWorkspaceID,
+		time.Now().AddDate(0, 0, -30).Format("2006-01-02"),
+		time.Now().AddDate(0, 0, 1).Format("2006-01-02"),
+	)
+
+	report, err := c.Session.GetDetailedReport(
+		c.Config.TogglWorkspaceID,
+		time.Now().AddDate(0, 0, -30).Format("2006-01-02"),
+		time.Now().AddDate(0, 0, 1).Format("2006-01-02"),
+		1,
+	)
+
+	expected := []TogglPlanfixEntry{
+		{
+			DetailedTimeEntry: report.Data[0],
+			Planfix: PlanfixEntryData{GroupCount:1, Sent:true, TaskID:12345},
+		},
+	}
+	equals := reflect.DeepEqual(entries, expected)
+	expectSuccess(t, err, "TestTogglClient_GetEntries")
+	assert(t, equals, true)
 }
