@@ -405,3 +405,32 @@ func TestTogglClient_markAsSent(t *testing.T) {
 	err := c.markAsSent(planfixEntries)
 	assert.NoError(t, err)
 }
+
+func TestTogglClient_getTaskEmail(t *testing.T) {
+	c := newClient()
+	c.Config.PlanfixAccount = "mycompany"
+
+	taskEmail := c.getTaskEmail(123)
+	assert.Equal(t, taskEmail, "task+123@mycompany.planfix.ru")
+}
+
+func TestTogglClient_getEmailBody(t *testing.T) {
+	c := newClient()
+	c.Config.PlanfixAccount = "mycompany"
+	c.Config.SMTPEmailFrom = "me@mycompany.ru"
+	c.Config.PlanfixAnaliticTypeValue = "Название аналитики"
+	c.Config.PlanfixAuthorName = "Имя Фамилия"
+
+	expectedBody := "Content-Type: text/plain; charset=\"utf-8\"\r\n"+
+		"From: me@mycompany.ru\r\n"+
+		"To: task+123@mycompany.planfix.ru\r\n"+
+		"Subject: @toggl @nonotify\r\n"+
+		"\r\n"+
+		"Вид работы: Название аналитики\r\n"+
+		"time: 234\r\n"+
+		"Автор: Имя Фамилия\r\n"+
+		"Дата: 2018-03-04\r\n"
+
+	body := c.getEmailBody(123, "2018-03-04", 234)
+	assert.Equal(t, body, expectedBody)
+}
