@@ -81,9 +81,14 @@ func (s *MockedTogglSession) GetDetailedReport(workspace int, since, until strin
 	return args.Get(0).(toggl.DetailedReport), args.Error(1)
 }
 
+func (s *MockedTogglSession) AddRemoveTag(entryID int, tag string, add bool) (toggl.TimeEntry, error) {
+	args := s.Called(entryID, tag, add)
+	return args.Get(0).(toggl.TimeEntry), args.Error(1)
+}
+
 func newClient() TogglClient {
 	cfg := config.Config{
-		TogglSentTag:"sent",
+		TogglSentTag: "sent",
 	}
 	api := planfix.New("", "apiKey", "account", "user", "password")
 	api.Sid = "123"
@@ -271,12 +276,12 @@ func TestTogglClient_GetEntries(t *testing.T) {
 
 	since := time.Now().AddDate(0, 0, -30).Format("2006-01-02")
 	until := time.Now().AddDate(0, 0, 1).Format("2006-01-02")
-	report := toggl.DetailedReport{Data:[]toggl.DetailedTimeEntry{
+	report := toggl.DetailedReport{Data: []toggl.DetailedTimeEntry{
 		{
-			ID: 1,
-			Project: "project1",
+			ID:          1,
+			Project:     "project1",
 			Description: "description1",
-			Tags: []string{"12345", "sent"},
+			Tags:        []string{"12345", "sent"},
 		},
 	}}
 
@@ -288,8 +293,115 @@ func TestTogglClient_GetEntries(t *testing.T) {
 	expected := []TogglPlanfixEntry{
 		{
 			DetailedTimeEntry: report.Data[0],
-			Planfix: PlanfixEntryData{GroupCount:1, Sent:true, TaskID:12345},
+			Planfix:           PlanfixEntryData{GroupCount: 1, Sent: true, TaskID: 12345},
 		},
 	}
 	assert.Equal(t, entries, expected)
+}
+
+func TestTogglClient_GetPendingEntries(t *testing.T) {
+	c := newClient()
+	sess := &MockedTogglSession{}
+	c.Session = sess
+
+	since := time.Now().AddDate(0, 0, -30).Format("2006-01-02")
+	until := time.Now().AddDate(0, 0, 1).Format("2006-01-02")
+	report := toggl.DetailedReport{Data: []toggl.DetailedTimeEntry{
+		// will be filtered by sent tag
+		{
+			ID:          1,
+			Project:     "project1",
+			Description: "description1",
+			Tags:        []string{"12345", "sent"},
+		},
+		{
+			ID:          2,
+			Project:     "project1",
+			Description: "description1",
+			Tags:        []string{"12345"},
+		},
+		// will be filtered by taskID tag
+		{
+			ID:          3,
+			Project:     "project1",
+			Description: "description1",
+			Tags:        []string{},
+		},
+		{
+			ID:          4,
+			Project:     "project1",
+			Description: "description1",
+			Tags:        []string{"12345"},
+		},
+	}}
+
+	sess.On("GetDetailedReport", c.Config.TogglWorkspaceID, since, until, 1).Return(report, nil)
+
+	entries, _ := c.GetPendingEntries()
+
+	expected := []TogglPlanfixEntry{
+		{
+			DetailedTimeEntry: toggl.DetailedTimeEntry{
+				ID:          2,
+				Project:     "project1",
+				Description: "description1",
+				Tags:        []string{"12345"},
+			},
+			Planfix: PlanfixEntryData{GroupCount: 1, Sent: false, TaskID: 12345},
+		},
+		{
+			DetailedTimeEntry: toggl.DetailedTimeEntry{
+				ID:          4,
+				Project:     "project1",
+				Description: "description1",
+				Tags:        []string{"12345"},
+			},
+			Planfix: PlanfixEntryData{GroupCount: 1, Sent: false, TaskID: 12345},
+		},
+	}
+	assert.Equal(t, entries, expected)
+}
+
+func TestTogglClient_markAsSent(t *testing.T) {
+	c := newClient()
+	sess := &MockedTogglSession{}
+	c.Session = sess
+
+	planfixEntries := []TogglPlanfixEntry{
+		{
+			DetailedTimeEntry: toggl.DetailedTimeEntry{
+				ID:          2,
+				Project:     "project1",
+				Description: "description1",
+				Tags:        []string{"12345"},
+			},
+			Planfix: PlanfixEntryData{GroupCount: 1, Sent: false, TaskID: 12345},
+		},
+		{
+			DetailedTimeEntry: toggl.DetailedTimeEntry{
+				ID:          4,
+				Project:     "project1",
+				Description: "description1",
+				Tags:        []string{"12345"},
+			},
+			Planfix: PlanfixEntryData{GroupCount: 1, Sent: false, TaskID: 12345},
+		},
+	}
+	togglEntries := []toggl.TimeEntry{
+		{
+			ID:          2,
+			Description: "description1",
+			Tags:        []string{"12345"},
+		},
+		{
+			ID:          4,
+			Description: "description1",
+			Tags:        []string{"12345"},
+		},
+	}
+	sess.On("AddRemoveTag", 2, c.Config.TogglSentTag, true).Return(togglEntries[0], nil)
+	sess.On("AddRemoveTag", 4, c.Config.TogglSentTag, true).Return(togglEntries[1], nil)
+
+	err := c.markAsSent(planfixEntries)
+	assert.NoError(t, err)
 }
