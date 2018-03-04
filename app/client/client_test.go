@@ -421,16 +421,99 @@ func TestTogglClient_getEmailBody(t *testing.T) {
 	c.Config.PlanfixAnaliticTypeValue = "Название аналитики"
 	c.Config.PlanfixAuthorName = "Имя Фамилия"
 
-	expectedBody := "Content-Type: text/plain; charset=\"utf-8\"\r\n"+
-		"From: me@mycompany.ru\r\n"+
-		"To: task+123@mycompany.planfix.ru\r\n"+
-		"Subject: @toggl @nonotify\r\n"+
-		"\r\n"+
-		"Вид работы: Название аналитики\r\n"+
-		"time: 234\r\n"+
-		"Автор: Имя Фамилия\r\n"+
+	expectedBody := "Content-Type: text/plain; charset=\"utf-8\"\r\n" +
+		"From: me@mycompany.ru\r\n" +
+		"To: task+123@mycompany.planfix.ru\r\n" +
+		"Subject: @toggl @nonotify\r\n" +
+		"\r\n" +
+		"Вид работы: Название аналитики\r\n" +
+		"time: 234\r\n" +
+		"Автор: Имя Фамилия\r\n" +
 		"Дата: 2018-03-04\r\n"
 
 	body := c.getEmailBody(123, "2018-03-04", 234)
 	assert.Equal(t, body, expectedBody)
+}
+
+func TestTogglClient_GetAnaliticData(t *testing.T) {
+	c := newClient()
+	ms := NewMockedServer([]string{
+		fixtureFromFile("analitic.getList.xml"),
+		fixtureFromFile("analitic.getOptions.xml"),
+		fixtureFromFile("analitic.getHandbook.xml"),
+	})
+	c.PlanfixAPI.URL = ms.URL
+	c.Config.PlanfixUserID = 123
+	c.Config.PlanfixAnaliticName = "Выработка"
+	c.Config.PlanfixAnaliticTypeName = "Вид работы"
+	c.Config.PlanfixAnaliticTypeValue = "Поминутная работа программиста"
+	c.Config.PlanfixAnaliticCountName = "Кол-во"
+	c.Config.PlanfixAnaliticCommentName = "Комментарий / ссылка"
+	c.Config.PlanfixAnaliticDateName = "Дата"
+	c.Config.PlanfixAnaliticUsersName = "Сотрудник"
+
+	// нормальное поведение
+	analiticData, err := c.GetAnaliticData(
+		c.Config.PlanfixAnaliticName,
+		c.Config.PlanfixAnaliticTypeName,
+		c.Config.PlanfixAnaliticTypeValue,
+		c.Config.PlanfixAnaliticCountName,
+		c.Config.PlanfixAnaliticCommentName,
+		c.Config.PlanfixAnaliticDateName,
+		c.Config.PlanfixAnaliticUsersName,
+	)
+	assert.NoError(t, err)
+	assert.Equal(t, analiticData.TypeValueID, 725)
+
+	// тест кеша
+	analiticData, err = c.GetAnaliticData("", "", "", "", "", "", "")
+	assert.NoError(t, err)
+	assert.Equal(t, analiticData.TypeValueID, 725)
+
+	// неправильный вид работы
+	c.analiticData = PlanfixAnaliticData{} // сброс кеша
+	ms = NewMockedServer([]string{
+		fixtureFromFile("analitic.getList.xml"),
+		fixtureFromFile("analitic.getOptions.xml"),
+		fixtureFromFile("analitic.getHandbook.xml"),
+	})
+	c.PlanfixAPI.URL = ms.URL
+	c.Config.PlanfixAnaliticTypeValue = "Какой-то неизвестный вид работы"
+	analiticData, err = c.GetAnaliticData(
+		c.Config.PlanfixAnaliticName,
+		c.Config.PlanfixAnaliticTypeName,
+		c.Config.PlanfixAnaliticTypeValue,
+		c.Config.PlanfixAnaliticCountName,
+		c.Config.PlanfixAnaliticCommentName,
+		c.Config.PlanfixAnaliticDateName,
+		c.Config.PlanfixAnaliticUsersName,
+	)
+	assert.Error(t, err)
+	assert.Equal(t, analiticData.TypeValueID, 0)
+	assert.Equal(t, analiticData.CommentID, 749)
+}
+
+// TODO: проходит метод полностью, но непонятно что проверяет
+func TestTogglClient_sendWithPlanfixAPI(t *testing.T) {
+	c := newClient()
+	c.Config.PlanfixAnaliticName = "Выработка"
+	c.Config.PlanfixAnaliticTypeName = "Вид работы"
+	c.Config.PlanfixAnaliticTypeValue = "Поминутная работа программиста"
+	c.Config.PlanfixAnaliticCountName = "Кол-во"
+	c.Config.PlanfixAnaliticCommentName = "Комментарий / ссылка"
+	c.Config.PlanfixAnaliticDateName = "Дата"
+	c.Config.PlanfixAnaliticUsersName = "Сотрудник"
+
+	ms := NewMockedServer([]string{
+		fixtureFromFile("analitic.getList.xml"),
+		fixtureFromFile("analitic.getOptions.xml"),
+		fixtureFromFile("analitic.getHandbook.xml"),
+		fixtureFromFile("action.add.xml"),
+	})
+	c.PlanfixAPI.URL = ms.URL
+	c.Config.PlanfixUserID = 123
+	c.Config.PlanfixAnaliticName = "Выработка"
+
+	err := c.sendWithPlanfixAPI(123, "2018-03-04", 234, "comment")
+	assert.NoError(t, err)
 }

@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"time"
 	"sort"
+	"reflect"
+	"strings"
 )
 
 type TogglSession interface {
@@ -21,15 +23,13 @@ type TogglSession interface {
 	GetDetailedReport(workspace int, since, until string, page int) (toggl.DetailedReport, error)
 }
 
-// данные не меняются при этой опции
-var analiticDataCached PlanfixAnaliticData
-
 // TogglClient - Клиент, общающийся с Toggl и Планфиксом
 type TogglClient struct {
-	Session    TogglSession
-	Config     *config.Config
-	PlanfixAPI planfix.API
-	Logger     *log.Logger
+	Session      TogglSession
+	Config       *config.Config
+	PlanfixAPI   planfix.API
+	Logger       *log.Logger
+	analiticData PlanfixAnaliticData
 }
 
 // PlanfixEntryData - Данные, подмешивающиеся к toggl.DetailedTimeEntry
@@ -303,7 +303,6 @@ func (c TogglClient) markAsSent(entries []TogglPlanfixEntry) error {
 	return nil
 }
 
-
 // sendWithSMTP отправляет toggl-запись через SMTP
 func (c TogglClient) sendWithSMTP(planfixTaskID int, date string, mins int) error {
 	auth := smtp.PlainAuth("", c.Config.SMTPLogin, c.Config.SMTPPassword, c.Config.SMTPHost)
@@ -318,10 +317,12 @@ func (c TogglClient) sendWithSMTP(planfixTaskID int, date string, mins int) erro
 	return smtp.SendMail(fmt.Sprintf("%s:%d", c.Config.SMTPHost, c.Config.SMTPPort), auth, c.Config.SMTPEmailFrom, to, msg)
 }
 
+// getTaskEmail возвращает email задачи по ее номеру
 func (c TogglClient) getTaskEmail(planfixTaskID int) string {
 	return fmt.Sprintf("task+%d@%s.planfix.ru", planfixTaskID, c.Config.PlanfixAccount)
 }
 
+// getEmailBody возвращает email body для отправки в Планфикс
 func (c TogglClient) getEmailBody(planfixTaskID int, date string, mins int) string {
 	taskEmail := c.getTaskEmail(planfixTaskID)
 	return fmt.Sprintf(
@@ -345,34 +346,23 @@ func (c TogglClient) getEmailBody(planfixTaskID int, date string, mins int) stri
 
 // sendWithPlanfixAPI отправляет toggl-запись через Планфикс API
 func (c TogglClient) sendWithPlanfixAPI(planfixTaskID int, date string, mins int, comment string) error {
-	analiticData, err := c.getAnaliticData(
-		c.Config.PlanfixAnaliticName,
-		c.Config.PlanfixAnaliticTypeName,
-		c.Config.PlanfixAnaliticCountName,
-		c.Config.PlanfixAnaliticCommentName,
-		c.Config.PlanfixAnaliticDateName,
-		c.Config.PlanfixAnaliticUsersName,
-	)
-	if err != nil {
-		return err
-	}
 	userIDs := struct {
 		ID []int `xml:"id"`
 	}{[]int{c.Config.PlanfixUserID}}
 
-	_, err = c.PlanfixAPI.ActionAdd(planfix.XMLRequestActionAdd{
+	_, err := c.PlanfixAPI.ActionAdd(planfix.XMLRequestActionAdd{
 		TaskGeneral: planfixTaskID,
 		Description: "",
 		Analitics: []planfix.XMLRequestActionAnalitic{
 			{
-				ID: analiticData.ID,
+				ID: c.analiticData.ID,
 				// аналитика должна содержать поля: вид работы, кол-во, дата, коммент, юзеры
 				ItemData: []planfix.XMLRequestAnaliticField{
-					{FieldID: analiticData.TypeID, Value: analiticData.TypeValueID}, // name
-					{FieldID: analiticData.CountID, Value: mins},                    // count, минут
-					{FieldID: analiticData.CommentID, Value: comment},               // comment
-					{FieldID: analiticData.DateID, Value: date},                     // date
-					{FieldID: analiticData.UsersID, Value: userIDs},                 // user
+					{FieldID: c.analiticData.TypeID, Value: c.analiticData.TypeValueID}, // name
+					{FieldID: c.analiticData.CountID, Value: mins},                      // count, минут
+					{FieldID: c.analiticData.CommentID, Value: comment},                 // comment
+					{FieldID: c.analiticData.DateID, Value: date},                       // date
+					{FieldID: c.analiticData.UsersID, Value: userIDs},                   // user
 				},
 			},
 		},
@@ -381,9 +371,9 @@ func (c TogglClient) sendWithPlanfixAPI(planfixTaskID int, date string, mins int
 }
 
 // getAnaliticData получает ID аналитики и ее полей из названий аналитики и полей
-func (c TogglClient) getAnaliticData(name, typeName, countName, commentName, dateName, usersName string) (PlanfixAnaliticData, error) {
-	if analiticDataCached.ID != 0 { // only on first call
-		return analiticDataCached, nil
+func (c *TogglClient) GetAnaliticData(name, typeName, typeValue, countName, commentName, dateName, usersName string) (PlanfixAnaliticData, error) {
+	if c.analiticData.ID != 0 { // only on first call
+		return c.analiticData, nil
 	}
 
 	// получение аналитики
@@ -408,10 +398,7 @@ func (c TogglClient) getAnaliticData(name, typeName, countName, commentName, dat
 		case typeName:
 			analiticData.TypeID = field.ID
 			// получение ID записи справочника
-			record, err := c.PlanfixAPI.GetHandbookRecordByName(field.HandbookID, c.Config.PlanfixAnaliticTypeValue)
-			if err != nil {
-				return analiticData, err
-			}
+			record, _ := c.PlanfixAPI.GetHandbookRecordByName(field.HandbookID, typeValue)
 			analiticData.TypeValueID = record.Key
 		case countName:
 			analiticData.CountID = field.ID
@@ -424,6 +411,28 @@ func (c TogglClient) getAnaliticData(name, typeName, countName, commentName, dat
 		}
 	}
 
-	analiticDataCached = analiticData
+	if err := c.isAnaliticValid(analiticData); err != nil {
+		return analiticData, err
+	}
+	c.analiticData = analiticData
 	return analiticData, nil
+}
+
+// isAnaliticValid проходит по всем полям структуры PlanfixAnaliticData и возвращает ошибку, если хоть один ID == 0
+func (c TogglClient) isAnaliticValid(data PlanfixAnaliticData) error {
+	var errors []string
+	v := reflect.ValueOf(data)
+	typeOf := v.Type()
+	//values := make([]interface{}, v.NumField())
+	for i := 0; i < v.NumField(); i++ {
+		name := typeOf.Field(i).Name
+		value := v.Field(i).Int()
+		if value == 0 {
+			errors = append(errors, fmt.Sprintf("%s not found", name))
+		}
+	}
+	if len(errors) != 0 {
+		return fmt.Errorf(strings.Join(errors, ", "))
+	}
+	return nil
 }

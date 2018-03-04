@@ -39,7 +39,7 @@ func getLogger(cfg config.Config) *log.Logger {
 	return logger
 }
 
-func parseFlags(cfg *config.Config){
+func parseFlags(cfg *config.Config) {
 	dryRun := flag.Bool("dry-run", false, "Don't actually change data")
 	if runtime.GOOS == "windows" {
 		// Allow user to hide the console window
@@ -97,6 +97,18 @@ func main() {
 	// get planfix and toggl user IDs, for early API check
 	if cfg.PlanfixUserName != "" && cfg.PlanfixUserPassword != "" {
 		cfg.PlanfixUserID = togglClient.GetPlanfixUserID()
+		_, err := togglClient.GetAnaliticData(
+			cfg.PlanfixAnaliticName,
+			cfg.PlanfixAnaliticTypeName,
+			cfg.PlanfixAnaliticTypeValue,
+			cfg.PlanfixAnaliticCountName,
+			cfg.PlanfixAnaliticCommentName,
+			cfg.PlanfixAnaliticDateName,
+			cfg.PlanfixAnaliticUsersName,
+		)
+		if err != nil {
+			logger.Fatalf("Поля аналитики указаны неправильно: %s", err.Error())
+		}
 	}
 	cfg.TogglUserID = togglClient.GetTogglUserID()
 
