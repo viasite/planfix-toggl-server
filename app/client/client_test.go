@@ -10,10 +10,8 @@ import (
 	"io/ioutil"
 	"encoding/xml"
 	"github.com/popstas/go-toggl"
-	"reflect"
 	"time"
 	"bytes"
-	"strings"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -166,6 +164,46 @@ func getTestGroupedEntries() map[int][]TogglPlanfixEntry {
 	}
 }
 
+func getTestDate() time.Time {
+	return time.Date(2018, 3, 4, 1, 2, 3, 0, time.Local)
+}
+
+func getTestDetailedReport() toggl.DetailedReport {
+	date := getTestDate()
+	return toggl.DetailedReport{Data: []toggl.DetailedTimeEntry{
+		// will be filtered by sent tag
+		{
+			ID:          1,
+			Project:     "project1",
+			Description: "description1",
+			Tags:        []string{"12345", "sent"},
+			Start:       &date,
+		},
+		{
+			ID:          2,
+			Project:     "project1",
+			Description: "description1",
+			Tags:        []string{"12345"},
+			Start:       &date,
+		},
+		// will be filtered by taskID tag
+		{
+			ID:          3,
+			Project:     "project1",
+			Description: "description1",
+			Tags:        []string{},
+			Start:       &date,
+		},
+		{
+			ID:          4,
+			Project:     "project1",
+			Description: "description1",
+			Tags:        []string{"12345"},
+			Start:       &date,
+		},
+	}}
+}
+
 func TestTogglClient_SumEntriesGroup(t *testing.T) {
 	c := newClient()
 	groupedEntries := getTestGroupedEntries()
@@ -185,8 +223,7 @@ func TestTogglClient_SumEntriesGroup(t *testing.T) {
 	}
 
 	summed := c.SumEntriesGroup(groupedEntries)
-	equals := reflect.DeepEqual(summed, expected)
-	assert.Equal(t, equals, true)
+	assert.Equal(t, expected, summed)
 }
 
 func TestTogglClient_GroupEntriesByTask(t *testing.T) {
@@ -195,8 +232,7 @@ func TestTogglClient_GroupEntriesByTask(t *testing.T) {
 	expected := getTestGroupedEntries()
 
 	grouped := c.GroupEntriesByTask(entries)
-	equals := reflect.DeepEqual(grouped, expected)
-	assert.Equal(t, equals, true)
+	assert.Equal(t, expected, grouped)
 }
 
 func TestTogglClient_GroupEntriesByTask_empty(t *testing.T) {
@@ -205,19 +241,18 @@ func TestTogglClient_GroupEntriesByTask_empty(t *testing.T) {
 	expected := map[int][]TogglPlanfixEntry{}
 
 	grouped := c.GroupEntriesByTask(entries)
-	equals := reflect.DeepEqual(grouped, expected)
-	assert.Equal(t, equals, true)
+	assert.Equal(t, expected, grouped)
 }
 
 func TestTogglClient_sendEntries_dryRun(t *testing.T) {
 	c := newClient()
 	c.Config.DryRun = true
-	now := time.Now()
+	date := getTestDate()
 	entries := []TogglPlanfixEntry{
 		{
 			toggl.DetailedTimeEntry{
 				Duration:    60000,
-				Start:       &now,
+				Start:       &date,
 				Project:     "project",
 				Description: "description",
 			},
@@ -230,8 +265,8 @@ func TestTogglClient_sendEntries_dryRun(t *testing.T) {
 	}
 
 	c.sendEntries(1, entries)
-	assert.Equal(t, strings.Contains(output.String(), "[DEBUG] sending [project] description (3)"), true)
-	assert.Equal(t, strings.Contains(output.String(), "[DEBUG] dry-run"), true)
+	assert.Contains(t, output.String(), "[DEBUG] sending [project] description (3)")
+	assert.Contains(t, output.String(), "[DEBUG] dry-run")
 }
 
 func TestTogglClient_GetTogglUserID(t *testing.T) {
@@ -254,7 +289,7 @@ func TestTogglClient_GetTogglUserID(t *testing.T) {
 	sess.On("GetAccount").Return(togglUser, nil)
 
 	togglUserID := c.GetTogglUserID()
-	assert.Equal(t, togglUserID, 123)
+	assert.Equal(t, 123, togglUserID)
 }
 
 func TestTogglClient_GetPlanfixUserID(t *testing.T) {
@@ -266,7 +301,7 @@ func TestTogglClient_GetPlanfixUserID(t *testing.T) {
 	c.PlanfixAPI.URL = ms.URL
 
 	planfixUserID := c.GetPlanfixUserID()
-	assert.Equal(t, planfixUserID, 9230)
+	assert.Equal(t, 9230, planfixUserID)
 }
 
 func TestTogglClient_GetEntries(t *testing.T) {
@@ -296,7 +331,7 @@ func TestTogglClient_GetEntries(t *testing.T) {
 			Planfix:           PlanfixEntryData{GroupCount: 1, Sent: true, TaskID: 12345},
 		},
 	}
-	assert.Equal(t, entries, expected)
+	assert.Equal(t, expected, entries)
 }
 
 func TestTogglClient_GetPendingEntries(t *testing.T) {
@@ -306,34 +341,8 @@ func TestTogglClient_GetPendingEntries(t *testing.T) {
 
 	since := time.Now().AddDate(0, 0, -30).Format("2006-01-02")
 	until := time.Now().AddDate(0, 0, 1).Format("2006-01-02")
-	report := toggl.DetailedReport{Data: []toggl.DetailedTimeEntry{
-		// will be filtered by sent tag
-		{
-			ID:          1,
-			Project:     "project1",
-			Description: "description1",
-			Tags:        []string{"12345", "sent"},
-		},
-		{
-			ID:          2,
-			Project:     "project1",
-			Description: "description1",
-			Tags:        []string{"12345"},
-		},
-		// will be filtered by taskID tag
-		{
-			ID:          3,
-			Project:     "project1",
-			Description: "description1",
-			Tags:        []string{},
-		},
-		{
-			ID:          4,
-			Project:     "project1",
-			Description: "description1",
-			Tags:        []string{"12345"},
-		},
-	}}
+	date := getTestDate()
+	report := getTestDetailedReport()
 
 	sess.On("GetDetailedReport", c.Config.TogglWorkspaceID, since, until, 1).Return(report, nil)
 
@@ -346,6 +355,7 @@ func TestTogglClient_GetPendingEntries(t *testing.T) {
 				Project:     "project1",
 				Description: "description1",
 				Tags:        []string{"12345"},
+				Start:       &date,
 			},
 			Planfix: PlanfixEntryData{GroupCount: 1, Sent: false, TaskID: 12345},
 		},
@@ -355,11 +365,12 @@ func TestTogglClient_GetPendingEntries(t *testing.T) {
 				Project:     "project1",
 				Description: "description1",
 				Tags:        []string{"12345"},
+				Start:       &date,
 			},
 			Planfix: PlanfixEntryData{GroupCount: 1, Sent: false, TaskID: 12345},
 		},
 	}
-	assert.Equal(t, entries, expected)
+	assert.Equal(t, expected, entries)
 }
 
 func TestTogglClient_markAsSent(t *testing.T) {
@@ -411,7 +422,7 @@ func TestTogglClient_getTaskEmail(t *testing.T) {
 	c.Config.PlanfixAccount = "mycompany"
 
 	taskEmail := c.getTaskEmail(123)
-	assert.Equal(t, taskEmail, "task+123@mycompany.planfix.ru")
+	assert.Equal(t, "task+123@mycompany.planfix.ru", taskEmail)
 }
 
 func TestTogglClient_getEmailBody(t *testing.T) {
@@ -432,7 +443,7 @@ func TestTogglClient_getEmailBody(t *testing.T) {
 		"Дата: 2018-03-04\r\n"
 
 	body := c.getEmailBody(123, "2018-03-04", 234)
-	assert.Equal(t, body, expectedBody)
+	assert.Equal(t, expectedBody, body)
 }
 
 func TestTogglClient_GetAnaliticData(t *testing.T) {
@@ -463,12 +474,12 @@ func TestTogglClient_GetAnaliticData(t *testing.T) {
 		c.Config.PlanfixAnaliticUsersName,
 	)
 	assert.NoError(t, err)
-	assert.Equal(t, analiticData.TypeValueID, 725)
+	assert.Equal(t, 725, analiticData.TypeValueID)
 
 	// тест кеша
 	analiticData, err = c.GetAnaliticData("", "", "", "", "", "", "")
 	assert.NoError(t, err)
-	assert.Equal(t, analiticData.TypeValueID, 725)
+	assert.Equal(t, 725, analiticData.TypeValueID)
 
 	// неправильный вид работы
 	c.analiticData = PlanfixAnaliticData{} // сброс кеша
@@ -489,8 +500,8 @@ func TestTogglClient_GetAnaliticData(t *testing.T) {
 		c.Config.PlanfixAnaliticUsersName,
 	)
 	assert.Error(t, err)
-	assert.Equal(t, analiticData.TypeValueID, 0)
-	assert.Equal(t, analiticData.CommentID, 749)
+	assert.Equal(t, 0, analiticData.TypeValueID)
+	assert.Equal(t, 749, analiticData.CommentID)
 }
 
 // TODO: проходит метод полностью, но непонятно что проверяет
@@ -516,4 +527,45 @@ func TestTogglClient_sendWithPlanfixAPI(t *testing.T) {
 
 	err := c.sendWithPlanfixAPI(123, "2018-03-04", 234, "comment")
 	assert.NoError(t, err)
+}
+
+// TODO: проходит метод полностью, но непонятно что проверяет
+func TestTogglClient_SendToPlanfix(t *testing.T) {
+	c := newClient()
+	sess := &MockedTogglSession{}
+	c.Session = sess
+
+	c.Config.PlanfixAnaliticName = "Выработка"
+	c.Config.PlanfixAnaliticTypeName = "Вид работы"
+	c.Config.PlanfixAnaliticTypeValue = "Поминутная работа программиста"
+	c.Config.PlanfixAnaliticCountName = "Кол-во"
+	c.Config.PlanfixAnaliticCommentName = "Комментарий / ссылка"
+	c.Config.PlanfixAnaliticDateName = "Дата"
+	c.Config.PlanfixAnaliticUsersName = "Сотрудник"
+
+	ms := NewMockedServer([]string{
+		fixtureFromFile("analitic.getList.xml"),
+		fixtureFromFile("analitic.getOptions.xml"),
+		fixtureFromFile("analitic.getHandbook.xml"),
+		fixtureFromFile("action.add.xml"),
+	})
+	c.PlanfixAPI.URL = ms.URL
+	c.Config.PlanfixUserID = 123
+	c.Config.PlanfixAnaliticName = "Выработка"
+
+	since := time.Now().AddDate(0, 0, -30).Format("2006-01-02")
+	until := time.Now().AddDate(0, 0, 1).Format("2006-01-02")
+	report := getTestDetailedReport()
+	sess.On("GetDetailedReport", c.Config.TogglWorkspaceID, since, until, 1).Return(report, nil)
+
+	sess.On("AddRemoveTag", 2, c.Config.TogglSentTag, true).Return(toggl.TimeEntry{}, nil)
+	sess.On("AddRemoveTag", 4, c.Config.TogglSentTag, true).Return(toggl.TimeEntry{}, nil)
+
+	pending, _ := c.GetPendingEntries()
+	grouped := c.GroupEntriesByTask(pending)
+	summedExpected := c.SumEntriesGroup(grouped)
+
+	summed, err := c.SendToPlanfix()
+	assert.NoError(t, err)
+	assert.Equal(t, summedExpected, summed)
 }

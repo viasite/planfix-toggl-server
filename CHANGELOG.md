@@ -1,5 +1,21 @@
 <a name=""></a>
-#  (2018-02-28)
+#  (2018-03-04)
+
+
+
+<a name="0.4.1"></a>
+## [0.4.1](https://github.com/viasite/planfix-toggl-server/compare/0.4.0...0.4.1) (2018-03-04)
+
+
+### Bug Fixes
+
+* понятная ошибка и раннее падение в случае, если поля аналитики указаны неправильно ([d13f3d5](https://github.com/viasite/planfix-toggl-server/commit/d13f3d5))
+* при отправке в Планфикс через email отправлять контрольное письмо себе на ящик только при debug: true ([2534800](https://github.com/viasite/planfix-toggl-server/commit/2534800))
+
+
+### Features
+
+* DryRun режим (-dry-run в командной строке) ([de1f42a](https://github.com/viasite/planfix-toggl-server/commit/de1f42a))
 
 
 
