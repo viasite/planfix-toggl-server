@@ -1,7 +1,10 @@
 package config
 
 import (
+	"fmt"
 	"github.com/jinzhu/configor"
+	"reflect"
+	"strings"
 )
 
 // Config - структура с конфигом приложения
@@ -15,7 +18,7 @@ type Config struct {
 	NoConsole                  bool   `env:"NO_CONSOLE" yaml:"noConsole"`
 	TogglAPIToken              string `env:"TOGGL_API_TOKEN" yaml:"togglApiToken"`
 	TogglWorkspaceID           int    `env:"TOGGL_WORKSPACE_ID" yaml:"togglWorkspaceId"`
-	TogglUserID                int    `env:"TOGGL_USER_ID" yaml:"togglUserId"`// will get in runtime
+	TogglUserID                int    `env:"TOGGL_USER_ID" yaml:"togglUserId"` // will get in runtime
 	TogglSentTag               string `env:"TOGGL_SENT_TAG" yaml:"togglSentTag"`
 	SMTPLogin                  string `env:"SMTP_LOGIN" yaml:"smtpLogin"`
 	SMTPPassword               string `env:"SMTP_PASSWORD" yaml:"smtpPassword"`
@@ -42,3 +45,102 @@ func GetConfig() (cfg Config) {
 	configor.Load(&cfg, "config.yml", "config.default.yml")
 	return cfg
 }
+
+func (c *Config) Validate() (errors []string, isValid bool) {
+	emptyFields := c.filterNotEmpty(c.GetFields())
+	if len(emptyFields) > 0 {
+		msg := fmt.Sprintf("поля %s пустые",
+			strings.Join(emptyFields, ", "),
+		)
+		errors = append(errors, msg)
+	}
+
+	err := c.isGroupInvalid([]string{
+		"TogglAPIToken",
+		"TogglWorkspaceID",
+	})
+	if err != nil {
+		errors = append(errors, "настройки Toggl неправильные")
+	}
+
+	err = c.isGroupInvalid([]string{
+		"PlanfixAccount",
+		"PlanfixApiKey",
+		"PlanfixUserName",
+		"PlanfixUserPassword",
+	})
+	if err != nil {
+		errors = append(errors, "настройки подключения к Планфиксу неправильные")
+	}
+
+	err = c.isGroupInvalid([]string{
+		"PlanfixAnaliticName",
+		"PlanfixAnaliticTypeName",
+		"PlanfixAnaliticTypeValue",
+		"PlanfixAnaliticCountName",
+		"PlanfixAnaliticCommentName",
+		"PlanfixAnaliticDateName",
+		"PlanfixAnaliticUsersName",
+	})
+	if err != nil {
+		errors = append(errors, "настройки аналитики, отправляемой в Планфикс, неправильные")
+	}
+
+	if c.SMTPSecure {
+		errors = append(errors, "Secure SMTP не поддерживается")
+	}
+
+	isValid = len(errors) == 0
+	return errors, isValid
+}
+
+func isEmpty(s string) bool {
+	return s == ""
+}
+
+func (c *Config) isGroupInvalid(fields []string) error {
+	emptyFields := c.filterNotEmpty(fields)
+	if len(emptyFields) == 0 {
+		return nil
+	}
+
+	return fmt.Errorf("поля %s неправильные",
+		strings.Join(emptyFields, ", "),
+	)
+}
+
+func (c *Config) filterNotEmpty(fields []string) (emptyFields []string) {
+	for _, fieldName := range fields {
+		if isEmpty(c.getFieldByName(fieldName)) {
+			emptyFields = append(emptyFields, fieldName)
+		}
+	}
+	return emptyFields
+}
+
+func (c *Config) getFieldByName(field string) string {
+	r := reflect.ValueOf(c)
+	v := reflect.Indirect(r)
+	f := v.FieldByName(field)
+	return f.String()
+}
+
+func (c *Config) GetFields() (emptyFields []string) {
+	s := reflect.ValueOf(c).Elem()
+	typeOfT := s.Type()
+
+	for i := 0; i < s.NumField(); i++ {
+		emptyFields = append(emptyFields, typeOfT.Field(i).Name)
+	}
+
+	return emptyFields
+}
+
+/*func (c *Config) GetEmptyFields (emptyFields []string){
+	r := reflect.ValueOf(c)
+
+	fields := r.MapKeys()
+	for _, field := range(fields){
+		fieldValue := field.String()
+	}
+}*/

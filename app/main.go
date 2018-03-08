@@ -61,9 +61,11 @@ func main() {
 
 	logger := getLogger(cfg)
 
-	if cfg.SMTPSecure {
-		err := "[ERROR] Secure SMTP not implemented"
-		logger.Fatal(err)
+	errors, ok := cfg.Validate()
+	if !ok {
+		for _, e := range errors {
+			log.Println(e)
+		}
 		os.Exit(1)
 	}
 
