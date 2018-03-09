@@ -52,6 +52,35 @@ func parseFlags(cfg *config.Config) {
 	}
 }
 
+func connectServices(cfg *config.Config, logger *log.Logger, togglClient client.TogglClient) (err error){
+	// toggl
+	logger.Println("[INFO] подключение к Toggl...")
+	cfg.TogglUserID, err = togglClient.GetTogglUserID()
+	if err != nil {
+		return err
+	}
+
+	// planfix
+	if cfg.PlanfixUserName != "" && cfg.PlanfixUserPassword != "" {
+		logger.Println("[INFO] подключение к Планфиксу...")
+		cfg.PlanfixUserID = togglClient.GetPlanfixUserID()
+		logger.Println("[INFO] получение данных аналитики Планфикса...")
+		_, err := togglClient.GetAnaliticData(
+			cfg.PlanfixAnaliticName,
+			cfg.PlanfixAnaliticTypeName,
+			cfg.PlanfixAnaliticTypeValue,
+			cfg.PlanfixAnaliticCountName,
+			cfg.PlanfixAnaliticCommentName,
+			cfg.PlanfixAnaliticDateName,
+			cfg.PlanfixAnaliticUsersName,
+		)
+		if err != nil {
+			return fmt.Errorf("Поля аналитики указаны неправильно: %s", err.Error())
+		}
+	}
+	return nil
+}
+
 func main() {
 	fmt.Printf("planfix-toggl %s\n", version)
 
@@ -97,28 +126,9 @@ func main() {
 	}
 
 	// get planfix and toggl user IDs, for early API check
-
-	// toggl
-	logger.Println("[INFO] подключение к Toggl...")
-	cfg.TogglUserID = togglClient.GetTogglUserID()
-
-	// planfix
-	if cfg.PlanfixUserName != "" && cfg.PlanfixUserPassword != "" {
-		logger.Println("[INFO] подключение к Планфиксу...")
-		cfg.PlanfixUserID = togglClient.GetPlanfixUserID()
-		logger.Println("[INFO] получение данных аналитики Планфикса...")
-		_, err := togglClient.GetAnaliticData(
-			cfg.PlanfixAnaliticName,
-			cfg.PlanfixAnaliticTypeName,
-			cfg.PlanfixAnaliticTypeValue,
-			cfg.PlanfixAnaliticCountName,
-			cfg.PlanfixAnaliticCommentName,
-			cfg.PlanfixAnaliticDateName,
-			cfg.PlanfixAnaliticUsersName,
-		)
-		if err != nil {
-			logger.Fatalf("[ERROR] Поля аналитики указаны неправильно: %s", err.Error())
-		}
+	err := connectServices(&cfg, logger, togglClient)
+	if err != nil {
+		logger.Fatalf("[ERROR] %s", err.Error())
 	}
 
 	// start tag cleaner
