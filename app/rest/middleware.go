@@ -126,7 +126,7 @@ func Logger(flags ...LoggerFlag) func(http.Handler) http.Handler {
 				// hide id and pin
 				regex := regexp.MustCompile(`favicon\.ico$`)
 				if !regex.MatchString(q) {
-					log.Printf("[INFO] REST %s - %s - %s - %d (%d) - %v %s",
+					log.Printf("[DEBUG] REST %s - %s - %s - %d (%d) - %v %s",
 						r.Method, q, strings.Split(r.RemoteAddr, ":")[0],
 						ww.Status(), ww.BytesWritten(), t2.Sub(t1), body)
 				}

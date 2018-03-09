@@ -232,12 +232,8 @@ func filter(input []TogglPlanfixEntry, f func(entry TogglPlanfixEntry) bool) (ou
 }
 
 // GetPendingEntries возвращает toggl-записи, которые должны быть отправлены в Планфикс
-func (c TogglClient) GetPendingEntries() ([]TogglPlanfixEntry, error) {
-	entries, err := c.GetEntries(
-		c.Config.TogglWorkspaceID,
-		time.Now().AddDate(0, 0, -30).Format("2006-01-02"),
-		time.Now().AddDate(0, 0, 1).Format("2006-01-02"),
-	)
+func (c TogglClient) GetPendingEntries() (entries []TogglPlanfixEntry, err error) {
+	entries, err = c.GetEntriesV2(toggl.DetailedReportParams{})
 	if err != nil {
 		return []TogglPlanfixEntry{}, err
 	}
