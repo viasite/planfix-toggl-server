@@ -1,19 +1,19 @@
 package client
 
 import (
-	"testing"
-	"log"
-	"github.com/viasite/planfix-toggl-server/app/config"
-	"github.com/popstas/planfix-go/planfix"
-	"net/http/httptest"
-	"net/http"
-	"io/ioutil"
+	"bytes"
 	"encoding/xml"
 	"github.com/popstas/go-toggl"
-	"time"
-	"bytes"
+	"github.com/popstas/planfix-go/planfix"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/viasite/planfix-toggl-server/app/config"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"time"
 )
 
 var output bytes.Buffer

@@ -43,6 +43,10 @@ for os in $oses; do
     mkdir -p "$dir/docroot"
     cp -r build/planfix-toggl-client/* "$dir/docroot"
 
+    # ssl certs
+    mkdir -p "$dir/certs"
+    cp -r certs/* "$dir/certs"
+
     # config
     cp config.default.yml "$dir"
     cp config.dist.yml "$dir/config.yml"

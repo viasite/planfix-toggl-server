@@ -37,7 +37,7 @@
 [Chrome](https://chrome.google.com/webstore/detail/toggl-button-planfix-edit/hkhchfdjhfegkhkgjongbodaphidfmcl) и
 [Firefox](https://addons.mozilla.org/ru/firefox/addon/toggl-button-planfix/).
 
-Кое-какую информацию можно смотреть через веб-интерфейс на http://localhost:8096
+Кое-какую информацию можно смотреть через веб-интерфейс на https://localhost:8097
 
 
 

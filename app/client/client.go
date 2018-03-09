@@ -8,12 +8,12 @@ import (
 	"log"
 	"math"
 	"net/smtp"
-	"regexp"
-	"strconv"
-	"time"
-	"sort"
 	"reflect"
+	"regexp"
+	"sort"
+	"strconv"
 	"strings"
+	"time"
 )
 
 type TogglSession interface {
@@ -21,6 +21,8 @@ type TogglSession interface {
 	AddRemoveTag(entryID int, tag string, add bool) (toggl.TimeEntry, error)
 	GetCurrentTimeEntry() (toggl.TimeEntry, error)
 	GetDetailedReport(workspace int, since, until string, page int) (toggl.DetailedReport, error)
+	GetDetailedReportV2(rp toggl.DetailedReportParams) (toggl.DetailedReport, error)
+	GetTagByName(name string, wid int) (tag toggl.Tag, err error)
 }
 
 // TogglClient - Клиент, общающийся с Toggl и Планфиксом
@@ -104,19 +106,20 @@ func (c TogglClient) RunTagCleaner() {
 // SendToPlanfix получает записи из Toggl и отправляет в Планфикс
 // * нужна, чтобы сохранился c.PlanfixAPI.Sid при авторизации
 func (c *TogglClient) SendToPlanfix() (sumEntries []TogglPlanfixEntry, err error) {
-	c.Logger.Println("[INFO] send to planfix")
+	c.Logger.Println("[INFO] отправка в Планфикс")
 	pendingEntries, err := c.GetPendingEntries()
 	if err != nil {
 		return []TogglPlanfixEntry{}, err
 	}
-	c.Logger.Printf("[INFO] found %d pending entries", len(pendingEntries))
+	c.Logger.Printf("[INFO] в очереди на отправку: %d", len(pendingEntries))
 	grouped := c.GroupEntriesByTask(pendingEntries)
 	for taskID, entries := range grouped {
 		err := c.sendEntries(taskID, entries)
+		taskURL := fmt.Sprintf("https://%s.planfix.ru/task/%d", c.Config.PlanfixAccount, taskID)
 		if err != nil {
-			c.Logger.Printf("[ERROR] entries of task #%d failed to send", taskID)
+			c.Logger.Printf("[ERROR] записи к задаче %s не удалось отправить", taskURL)
 		} else {
-			c.Logger.Printf("[INFO] entries sent to https://%s.planfix.ru/task/%d", c.Config.PlanfixAccount, taskID)
+			c.Logger.Printf("[INFO] записи отправлены на %s", taskURL)
 		}
 	}
 	return c.SumEntriesGroup(grouped), nil
@@ -146,23 +149,47 @@ func (c TogglClient) SumEntriesGroup(grouped map[int][]TogglPlanfixEntry) (summe
 				ge.Planfix.GroupCount++
 				g[entry.Planfix.TaskID] = ge
 			} else {
+				entry.Description = c.getSumEntryName(entries)
 				g[entry.Planfix.TaskID] = entry
 			}
 		}
 	}
 
-	keys := make([]int, 0, len(g))
+	taskIDs := make([]int, 0, len(g))
 	for k := range g {
-		keys = append(keys, k)
+		taskIDs = append(taskIDs, k)
 	}
-	sort.Ints(keys)
+	sort.Ints(taskIDs)
 
 	summed = make([]TogglPlanfixEntry, 0, len(g))
-	for _, taskID := range keys {
+	for _, taskID := range taskIDs {
 		summed = append(summed, g[taskID])
 	}
 
 	return summed
+}
+
+func (c TogglClient) getSumEntryName(entries []TogglPlanfixEntry) string {
+	names := []string{}
+	for _, entry := range entries {
+		names = append(names, entry.Description)
+	}
+	// sort
+	sort.Strings(names)
+
+	// group
+	groupNamesCounts := make(map[string]int)
+	for _, name := range names {
+		groupNamesCounts[name]++
+	}
+
+	// keys
+	names = []string{}
+	for name, _ := range groupNamesCounts {
+		names = append(names, name)
+	}
+
+	return strings.Join(names, "\n")
 }
 
 // GetTogglUserID возвращает ID юзера в Toggl
@@ -184,13 +211,7 @@ func (c TogglClient) GetPlanfixUserID() int {
 	return user.User.ID
 }
 
-// GetEntries получает []toggl.DetailedTimeEntry и превращает их в []TogglPlanfixEntry с подмешенными данными Планфикса
-func (c TogglClient) GetEntries(togglWorkspaceID int, since, until string) (entries []TogglPlanfixEntry, err error) {
-	report, err := c.Session.GetDetailedReport(togglWorkspaceID, since, until, 1)
-	if err != nil {
-		c.Logger.Printf("[ERROR] Toggl: %s", err)
-	}
-
+func (c TogglClient) ReportToTogglPlanfixEntry(report toggl.DetailedReport) (entries []TogglPlanfixEntry) {
 	for _, entry := range report.Data {
 
 		pfe := TogglPlanfixEntry{
@@ -218,6 +239,58 @@ func (c TogglClient) GetEntries(togglWorkspaceID int, since, until string) (entr
 		entries = append(entries, pfe)
 	}
 
+	return entries
+}
+
+// GetEntries получает []toggl.DetailedTimeEntry и превращает их в []TogglPlanfixEntry с подмешенными данными Планфикса
+func (c TogglClient) GetEntries(togglWorkspaceID int, since, until string) (entries []TogglPlanfixEntry, err error) {
+	report, err := c.Session.GetDetailedReport(togglWorkspaceID, since, until, 1)
+	if err != nil {
+		c.Logger.Printf("[ERROR] Toggl: %s", err)
+	}
+
+	entries = c.ReportToTogglPlanfixEntry(report)
+	return entries, nil
+}
+
+func (c TogglClient) GetReport(rp toggl.DetailedReportParams) toggl.DetailedReport {
+	rp.WorkspaceID = c.Config.TogglWorkspaceID
+	rp.Rounding = true
+	report, err := c.Session.GetDetailedReportV2(rp)
+	if err != nil {
+		c.Logger.Printf("[ERROR] Toggl: %s", err)
+	}
+	return report
+}
+
+func (c TogglClient) GetReportV1(togglWorkspaceID int, since, until string, page int) toggl.DetailedReport {
+	report, err := c.Session.GetDetailedReport(togglWorkspaceID, since, until, page)
+	if err != nil {
+		c.Logger.Printf("[ERROR] Toggl: %s", err)
+	}
+	return report
+}
+
+func (c TogglClient) getDetailedReportParams() {
+	return
+}
+
+func (c TogglClient) GetEntriesV2(rp toggl.DetailedReportParams) (entries []TogglPlanfixEntry, err error) {
+	report := c.GetReport(toggl.DetailedReportParams{})
+	entries = c.ReportToTogglPlanfixEntry(report)
+	return entries, nil
+}
+
+func (c TogglClient) GetEntriesByTag(tagName string) (entries []TogglPlanfixEntry, err error) {
+	tag, err := c.Session.GetTagByName(tagName, c.Config.TogglWorkspaceID)
+	if err != nil{
+		return entries, err
+	}
+	report := c.GetReport(toggl.DetailedReportParams{
+		// TODO: defaultReportParams
+		TagIDs: []int{tag.ID},
+	})
+	entries = c.ReportToTogglPlanfixEntry(report)
 	return entries, nil
 }
 

@@ -26,8 +26,9 @@ type Server struct {
 
 //Run the lister and request's router, activate rest server
 func (s Server) Run() {
-	port := 8096
-	s.Logger.Printf("[INFO] start rest server at :%d", port)
+	//port := 8096
+	portSSL := 8097
+	//s.Logger.Printf("[INFO] запуск сервера на :%d", port)
 
 	router := chi.NewRouter()
 	router.Use(middleware.RealIP, Recoverer)
@@ -36,7 +37,10 @@ func (s Server) Run() {
 	router.Route("/api/v1", func(r chi.Router) {
 		r.Use(Logger())
 		r.Get("/toggl/entries", s.getEntriesCtrl)
+		r.Get("/toggl/planfix-task/{taskID}", s.getPlanfixTaskCtrl)
+		r.Get("/toggl/planfix-task/{taskID}/last", s.getPlanfixTaskLastCtrl)
 		r.Get("/params", s.getParamsCtrl)
+		r.Get("/config/validate", s.getValidateConfigCtrl)
 	})
 
 	router.Get("/robots.txt", func(w http.ResponseWriter, r *http.Request) {
@@ -45,7 +49,15 @@ func (s Server) Run() {
 
 	s.fileServer(router, "/", http.Dir(filepath.Join(".", "docroot")))
 
-	s.Logger.Println(http.ListenAndServe(fmt.Sprintf(":%d", port), router))
+	s.Logger.Printf("[INFO] веб-интерфейс на https://localhost:%d", portSSL)
+	s.Logger.Println(http.ListenAndServeTLS(
+		fmt.Sprintf(":%d", portSSL),
+		"certs/server.crt",
+		"certs/server.key", router),
+	)
+
+	//s.Logger.Printf("[INFO] веб-интерфейс на http://localhost:%d", port)
+	//s.Logger.Println(http.ListenAndServe(fmt.Sprintf(":%d", port), router))
 }
 
 // GET /v1/toggl/entries
@@ -84,6 +96,35 @@ func (s Server) getEntriesCtrl(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, entries)
 }
 
+// TODO
+// GET /config/validate
+func (s Server) getValidateConfigCtrl(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	errors, _ := s.Config.Validate()
+	//getValidateConfigCtrl
+	render.JSON(w, r, errors)
+}
+
+// GET /toggl/planfix-task/{taskID}
+func (s Server) getPlanfixTaskCtrl(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	taskID := chi.URLParam(r, "taskID")
+	entries, _ := s.TogglClient.GetEntriesByTag(taskID)
+	render.JSON(w, r, entries)
+}
+
+// GET /toggl/planfix-task/{taskID}/last
+func (s Server) getPlanfixTaskLastCtrl(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	taskID := chi.URLParam(r, "taskID")
+	entries, _ := s.TogglClient.GetEntriesByTag(taskID)
+	if len(entries) > 0 {
+		render.JSON(w, r, entries[0])
+	} else {
+		render.JSON(w, r, entries)
+	}
+}
+
 // GET /params
 func (s Server) getParamsCtrl(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -97,7 +138,7 @@ func (s Server) getParamsCtrl(w http.ResponseWriter, r *http.Request) {
 
 // serves static files from ./docroot
 func (s Server) fileServer(r chi.Router, path string, root http.FileSystem) {
-	s.Logger.Printf("[INFO] run file server for %s", root)
+	//s.Logger.Printf("[INFO] run file server for %s", root)
 	fs := http.StripPrefix(path, http.FileServer(root))
 	if path != "/" && path[len(path)-1] != '/' {
 		r.Get(path, http.RedirectHandler(path+"/", 301).ServeHTTP)
