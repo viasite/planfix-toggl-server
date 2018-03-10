@@ -288,7 +288,7 @@ func TestTogglClient_GetTogglUserID(t *testing.T) {
 	}{ID: 123}}
 	sess.On("GetAccount").Return(togglUser, nil)
 
-	togglUserID := c.GetTogglUserID()
+	togglUserID, _ := c.GetTogglUserID()
 	assert.Equal(t, 123, togglUserID)
 }
 

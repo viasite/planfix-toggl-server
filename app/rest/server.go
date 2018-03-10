@@ -14,6 +14,7 @@ import (
 	"github.com/viasite/planfix-toggl-server/app/client"
 	"github.com/viasite/planfix-toggl-server/app/config"
 	"time"
+	"encoding/json"
 )
 
 // Server is a rest with store
@@ -33,6 +34,7 @@ func (s Server) Run() {
 	router := chi.NewRouter()
 	router.Use(middleware.RealIP, Recoverer)
 	router.Use(AppInfo("planfix-toggl", s.Version), Ping)
+	router.Use(CORS)
 
 	router.Route("/api/v1", func(r chi.Router) {
 		r.Use(Logger())
@@ -40,7 +42,14 @@ func (s Server) Run() {
 		r.Get("/toggl/planfix-task/{taskID}", s.getPlanfixTaskCtrl)
 		r.Get("/toggl/planfix-task/{taskID}/last", s.getPlanfixTaskLastCtrl)
 		r.Get("/params", s.getParamsCtrl)
-		r.Get("/config/validate", s.getValidateConfigCtrl)
+
+		// config
+		r.Route("/config", func(r chi.Router) {
+			r.Get("/", s.getConfigCtrl)
+			r.Options("/", s.updateConfigCtrl)
+			r.Post("/", s.updateConfigCtrl)
+			r.Get("/validate", s.getValidateConfigCtrl)
+		})
 	})
 
 	router.Get("/robots.txt", func(w http.ResponseWriter, r *http.Request) {
@@ -49,6 +58,7 @@ func (s Server) Run() {
 
 	s.fileServer(router, "/", http.Dir(filepath.Join(".", "docroot")))
 
+	//go http.ListenAndServe(fmt.Sprintf(":%d", port), router)
 	s.Logger.Printf("[INFO] веб-интерфейс на https://localhost:%d", portSSL)
 	s.Logger.Println(http.ListenAndServeTLS(
 		fmt.Sprintf(":%d", portSSL),
@@ -64,7 +74,6 @@ func (s Server) Run() {
 func (s Server) getEntriesCtrl(w http.ResponseWriter, r *http.Request) {
 	var entries []client.TogglPlanfixEntry
 	var err error
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	queryValues := r.URL.Query()
 	t := queryValues.Get("type")
 	tomorrow := time.Now().AddDate(0, 0, 1).Format("2006-01-02")
@@ -96,10 +105,38 @@ func (s Server) getEntriesCtrl(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, entries)
 }
 
+// GET /v1/config
+func (s Server) getConfigCtrl(w http.ResponseWriter, r *http.Request) {
+	render.JSON(w, r, s.Config)
+}
+
+// POST /v1/config
+func (s Server) updateConfigCtrl(w http.ResponseWriter, r *http.Request) {
+	// answer to OPTIONS request for content-type
+	if r.Method == "OPTIONS" {
+		if r.Header.Get("Access-Control-Request-Method") == "content-type" {
+			w.Header().Set("Content-Type", "application/json")
+		}
+		return
+	}
+
+	newConfig := config.GetConfig()
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&newConfig)
+	if err != nil {
+		s.Logger.Printf("Cannot decode %v", err.Error())
+	}
+
+	errors, _ := newConfig.Validate()
+	if len(errors) == 0 {
+		newConfig.SaveConfig()
+	}
+	render.JSON(w, r, errors)
+}
+
 // TODO
 // GET /config/validate
 func (s Server) getValidateConfigCtrl(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	errors, _ := s.Config.Validate()
 	//getValidateConfigCtrl
 	render.JSON(w, r, errors)
@@ -107,7 +144,6 @@ func (s Server) getValidateConfigCtrl(w http.ResponseWriter, r *http.Request) {
 
 // GET /toggl/planfix-task/{taskID}
 func (s Server) getPlanfixTaskCtrl(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	taskID := chi.URLParam(r, "taskID")
 	entries, _ := s.TogglClient.GetEntriesByTag(taskID)
 	render.JSON(w, r, entries)
@@ -115,7 +151,6 @@ func (s Server) getPlanfixTaskCtrl(w http.ResponseWriter, r *http.Request) {
 
 // GET /toggl/planfix-task/{taskID}/last
 func (s Server) getPlanfixTaskLastCtrl(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	taskID := chi.URLParam(r, "taskID")
 	entries, _ := s.TogglClient.GetEntriesByTag(taskID)
 	if len(entries) > 0 {
@@ -127,7 +162,6 @@ func (s Server) getPlanfixTaskLastCtrl(w http.ResponseWriter, r *http.Request) {
 
 // GET /params
 func (s Server) getParamsCtrl(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	params := struct {
 		PlanfixAccount string `json:"planfix_account"`
 	}{

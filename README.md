@@ -79,6 +79,7 @@
 - `planfixAuthorName` - ваше Имя Фамилия в Планфиксе
 
 Настройки для отправки через Планфикс API:
+- `planfixApiKey` - приватный API ключ, есть у владельца аккаунта Планфикса
 - `planfixApiUrl` - URL API, для аккаунтов в России он будет другим
 - `planfixUserName`, `planfixUserPassword` - ваши логин и пароль в Планфиксе
 

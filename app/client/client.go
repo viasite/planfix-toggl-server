@@ -193,12 +193,12 @@ func (c TogglClient) getSumEntryName(entries []TogglPlanfixEntry) string {
 }
 
 // GetTogglUserID возвращает ID юзера в Toggl
-func (c TogglClient) GetTogglUserID() int {
+func (c TogglClient) GetTogglUserID() (int, error) {
 	account, err := c.Session.GetAccount()
 	if err != nil {
-		c.Logger.Fatalf("[ERROR] Failed to get Toggl UserID, check TogglAPIToken, %s", err.Error())
+		return 0, fmt.Errorf("Не удалось получить Toggl UserID, проверьте TogglAPIToken, %s", err.Error())
 	}
-	return account.Data.ID
+	return account.Data.ID, nil
 }
 
 // GetPlanfixUserID возвращает ID юзера в Планфиксе

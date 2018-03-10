@@ -5,6 +5,10 @@ import (
 	"github.com/jinzhu/configor"
 	"reflect"
 	"strings"
+	"gopkg.in/yaml.v2"
+	"os"
+	"io/ioutil"
+	"time"
 )
 
 // Config - структура с конфигом приложения
@@ -44,6 +48,19 @@ type Config struct {
 func GetConfig() (cfg Config) {
 	configor.Load(&cfg, "config.yml", "config.default.yml")
 	return cfg
+}
+
+// - SaveConfig пишет конфиг в файл
+func (c *Config) SaveConfig() (cfg *Config, err error) {
+	cfgString, err := yaml.Marshal(c)
+	if err != nil {
+		return cfg, err
+	}
+	if _, err := os.Stat("config.yml"); err == nil {
+		os.Rename("config.yml", fmt.Sprintf("config-%s.yml", time.Now().Format("2006-02-01 03_04_05")));
+		ioutil.WriteFile("config.yml", cfgString, 0644)
+	}
+	return c, nil
 }
 
 func (c *Config) Validate() (errors []string, isValid bool) {
