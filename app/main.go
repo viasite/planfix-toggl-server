@@ -86,19 +86,17 @@ func connectServices(cfg *config.Config, logger *log.Logger, togglClient client.
 
 func main() {
 	fmt.Printf("planfix-toggl %s\n", version)
-
 	cfg := config.GetConfig()
 
 	parseFlags(&cfg)
 
 	logger := getLogger(cfg)
 
-	errors, ok := cfg.Validate()
-	if !ok {
+	errors, isValid := cfg.Validate()
+	if !isValid {
 		for _, e := range errors {
 			log.Println(e)
 		}
-		os.Exit(1)
 	}
 
 	if cfg.NoConsole {
@@ -131,8 +129,11 @@ func main() {
 	// get planfix and toggl user IDs, for early API check
 	err := connectServices(&cfg, logger, togglClient)
 	if err != nil {
+		isValid = false
 		logger.Printf("[ERROR] %s", err.Error())
-	} else {
+	}
+
+	if(isValid){
 		// start tag cleaner
 		go togglClient.RunTagCleaner()
 
