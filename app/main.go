@@ -63,7 +63,10 @@ func connectServices(cfg *config.Config, logger *log.Logger, togglClient client.
 	// planfix
 	if cfg.PlanfixUserName != "" && cfg.PlanfixUserPassword != "" {
 		logger.Println("[INFO] подключение к Планфиксу...")
-		cfg.PlanfixUserID = togglClient.GetPlanfixUserID()
+		cfg.PlanfixUserID, err = togglClient.GetPlanfixUserID()
+		if err != nil {
+			return err
+		}
 		logger.Println("[INFO] получение данных аналитики Планфикса...")
 		_, err := togglClient.GetAnaliticData(
 			cfg.PlanfixAnaliticName,
@@ -128,14 +131,14 @@ func main() {
 	// get planfix and toggl user IDs, for early API check
 	err := connectServices(&cfg, logger, togglClient)
 	if err != nil {
-		logger.Fatalf("[ERROR] %s", err.Error())
+		logger.Printf("[ERROR] %s", err.Error())
+	} else {
+		// start tag cleaner
+		go togglClient.RunTagCleaner()
+
+		// start sender
+		go togglClient.RunSender()
 	}
-
-	// start tag cleaner
-	go togglClient.RunTagCleaner()
-
-	// start sender
-	go togglClient.RunSender()
 
 	// start API server
 	server := rest.Server{

@@ -202,13 +202,13 @@ func (c TogglClient) GetTogglUserID() (int, error) {
 }
 
 // GetPlanfixUserID возвращает ID юзера в Планфиксе
-func (c TogglClient) GetPlanfixUserID() int {
+func (c TogglClient) GetPlanfixUserID() (int, error) {
 	var user planfix.XMLResponseUserGet
 	user, err := c.PlanfixAPI.UserGet(0)
 	if err != nil {
-		c.Logger.Fatalf("[ERROR] Failed to get Planfix UserID, check PlanfixAPIKey, PlanfixAPIUrl, PlanfixUserName, PlanfixUserPassword, %s", err.Error())
+		return 0, fmt.Errorf("Не удалось получить Planfix UserID, проверьте PlanfixAPIKey, PlanfixAPIUrl, PlanfixUserName, PlanfixUserPassword, %s", err.Error())
 	}
-	return user.User.ID
+	return user.User.ID, nil
 }
 
 func (c TogglClient) ReportToTogglPlanfixEntry(report toggl.DetailedReport) (entries []TogglPlanfixEntry) {
