@@ -15,6 +15,7 @@ import (
 	"github.com/viasite/planfix-toggl-server/app/config"
 	"time"
 	"encoding/json"
+	"github.com/popstas/planfix-go/planfix"
 )
 
 // Server is a rest with store
@@ -38,17 +39,33 @@ func (s Server) Run() {
 
 	router.Route("/api/v1", func(r chi.Router) {
 		r.Use(Logger())
-		r.Get("/toggl/entries", s.getEntriesCtrl)
-		r.Get("/toggl/planfix-task/{taskID}", s.getPlanfixTaskCtrl)
-		r.Get("/toggl/planfix-task/{taskID}/last", s.getPlanfixTaskLastCtrl)
+
 		r.Get("/params", s.getParamsCtrl)
+
+		// toggl
+		r.Route("/toggl", func(r chi.Router) {
+			r.Get("/entries", s.getEntriesCtrl)
+			r.Get("/entries/planfix/{taskID}", s.getPlanfixTaskCtrl)
+			r.Get("/entries/planfix/{taskID}/last", s.getPlanfixTaskLastCtrl)
+			r.Get("/user", s.getTogglUser)
+		})
 
 		// config
 		r.Route("/config", func(r chi.Router) {
 			r.Get("/", s.getConfigCtrl)
 			r.Options("/", s.updateConfigCtrl)
 			r.Post("/", s.updateConfigCtrl)
-			r.Get("/validate", s.getValidateConfigCtrl)
+		})
+
+		// planfix
+		r.Route("/planfix", func(r chi.Router) {
+			r.Get("/user", s.getPlanfixUser)
+			r.Get("/analitic-ids", s.getPlanfixAnalitic)
+		})
+
+		// validate
+		r.Route("/validate", func(r chi.Router) {
+			r.Get("/config", s.getValidateConfigCtrl)
 		})
 	})
 
@@ -135,21 +152,66 @@ func (s Server) updateConfigCtrl(w http.ResponseWriter, r *http.Request) {
 }
 
 // TODO
-// GET /config/validate
+// GET /validate/config
 func (s Server) getValidateConfigCtrl(w http.ResponseWriter, r *http.Request) {
 	errors, _ := s.Config.Validate()
 	//getValidateConfigCtrl
 	render.JSON(w, r, errors)
 }
 
-// GET /toggl/planfix-task/{taskID}
+// GET /api/v1/planfix/user
+func (s Server) getPlanfixUser(w http.ResponseWriter, r *http.Request) {
+	var user planfix.XMLResponseUserGet
+	user, err := s.TogglClient.PlanfixAPI.UserGet(0)
+	if err != nil {
+		w.WriteHeader(400)
+		msg := "Не удалось получить Planfix UserID, проверьте PlanfixAPIKey, PlanfixAPIUrl, PlanfixUserName, PlanfixUserPassword, %s"
+		w.Write([]byte(fmt.Sprintf(msg, err.Error())))
+		return
+	}
+	render.JSON(w, r, user.User)
+}
+
+// GET /api/v1/toggl/user
+func (s Server) getTogglUser(w http.ResponseWriter, r *http.Request) {
+	var user planfix.XMLResponseUserGet
+	user, err := s.TogglClient.PlanfixAPI.UserGet(0)
+	if err != nil {
+		w.WriteHeader(400)
+		msg := "Не удалось получить Planfix UserID, проверьте PlanfixAPIKey, PlanfixAPIUrl, PlanfixUserName, PlanfixUserPassword, %s"
+		w.Write([]byte(fmt.Sprintf(msg, err.Error())))
+		return
+	}
+	render.JSON(w, r, user.User)
+}
+
+// GET /api/v1/planfix/analitic-ids
+func (s Server) getPlanfixAnalitic(w http.ResponseWriter, r *http.Request) {
+	analitic, err := s.TogglClient.GetAnaliticData(
+		s.Config.PlanfixAnaliticName,
+		s.Config.PlanfixAnaliticTypeName,
+		s.Config.PlanfixAnaliticTypeValue,
+		s.Config.PlanfixAnaliticCountName,
+		s.Config.PlanfixAnaliticCommentName,
+		s.Config.PlanfixAnaliticDateName,
+		s.Config.PlanfixAnaliticUsersName,
+	)
+	if err != nil {
+		w.WriteHeader(400)
+		w.Write([]byte(fmt.Sprintf("Поля аналитики указаны неправильно: %s", err.Error())))
+		return
+	}
+	render.JSON(w, r, analitic)
+}
+
+// GET /toggl/entries/planfix/{taskID}
 func (s Server) getPlanfixTaskCtrl(w http.ResponseWriter, r *http.Request) {
 	taskID := chi.URLParam(r, "taskID")
 	entries, _ := s.TogglClient.GetEntriesByTag(taskID)
 	render.JSON(w, r, entries)
 }
 
-// GET /toggl/planfix-task/{taskID}/last
+// GET /toggl/entries/planfix/{taskID}/last
 func (s Server) getPlanfixTaskLastCtrl(w http.ResponseWriter, r *http.Request) {
 	taskID := chi.URLParam(r, "taskID")
 	entries, _ := s.TogglClient.GetEntriesByTag(taskID)
