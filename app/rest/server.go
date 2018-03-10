@@ -171,8 +171,8 @@ func (s Server) getValidateConfigCtrl(w http.ResponseWriter, r *http.Request) {
 }
 
 type ResponseJSON struct {
-	Errors []string `json:"errors"`
-	Data interface{} `json:"data"`
+	Errors []string    `json:"errors"`
+	Data   interface{} `json:"data"`
 }
 
 // GET /api/v1/planfix/user
@@ -184,7 +184,7 @@ func (s Server) getPlanfixUser(w http.ResponseWriter, r *http.Request) {
 		msg := "Не удалось получить Planfix UserID, проверьте PlanfixAPIKey, PlanfixAPIUrl, PlanfixUserName, PlanfixUserPassword, %s"
 		errors = append(errors, fmt.Sprintf(msg, err.Error()))
 	}
-	render.JSON(w, r, ResponseJSON{errors, user.User} )
+	render.JSON(w, r, ResponseJSON{errors, user.User})
 }
 
 // GET /api/v1/toggl/user
@@ -204,7 +204,7 @@ func (s Server) getTogglUser(w http.ResponseWriter, r *http.Request) {
 func (s Server) getTogglWorkspaces(w http.ResponseWriter, r *http.Request) {
 	var workspaces []toggl.Workspace
 	var errors []string;
-	workspaces, err := s.TogglClient.Session.GetWorkspaces(s.Config.TogglWorkspaceID)
+	workspaces, err := s.TogglClient.Session.GetWorkspaces()
 	if err != nil {
 		msg := "Не удалось получить Toggl workspaces, проверьте TogglAPIToken, %s"
 		errors = append(errors, fmt.Sprintf(msg, err.Error()))

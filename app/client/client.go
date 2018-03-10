@@ -23,7 +23,7 @@ type TogglSession interface {
 	GetDetailedReport(workspace int, since, until string, page int) (toggl.DetailedReport, error)
 	GetDetailedReportV2(rp toggl.DetailedReportParams) (toggl.DetailedReport, error)
 	GetTagByName(name string, wid int) (tag toggl.Tag, err error)
-	GetWorkspaces(wid int) (workspaces []toggl.Workspace, err error)
+	GetWorkspaces() (workspaces []toggl.Workspace, err error)
 }
 
 // TogglClient - Клиент, общающийся с Toggl и Планфиксом
@@ -215,6 +215,20 @@ func (c TogglClient) GetTogglUserID() (int, error) {
 	return account.Data.ID, nil
 }
 
+// GetTogglUserID возвращает ID юзера в Toggl
+func (c TogglClient) IsWorkspaceExists(wid int) (bool, error) {
+	ws, err := c.Session.GetWorkspaces()
+	if err != nil {
+		return false, fmt.Errorf("Не удалось получить Toggl UserID, проверьте TogglAPIToken, %s", err.Error())
+	}
+	for _, w := range ws {
+		if w.ID == wid {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 // GetPlanfixUserID возвращает ID юзера в Планфиксе
 func (c TogglClient) GetPlanfixUserID() (int, error) {
 	var user planfix.XMLResponseUserGet
@@ -297,7 +311,7 @@ func (c TogglClient) GetEntriesV2(rp toggl.DetailedReportParams) (entries []Togg
 
 func (c TogglClient) GetEntriesByTag(tagName string) (entries []TogglPlanfixEntry, err error) {
 	tag, err := c.Session.GetTagByName(tagName, c.Config.TogglWorkspaceID)
-	if err != nil{
+	if err != nil {
 		return entries, err
 	}
 	report := c.GetReport(toggl.DetailedReportParams{

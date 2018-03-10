@@ -6,3 +6,4 @@ planfix-toggl.log
 /build/
 /docroot/
 !/docroot/.keep
+config-*.yml

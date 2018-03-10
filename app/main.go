@@ -52,12 +52,20 @@ func parseFlags(cfg *config.Config) {
 	}
 }
 
-func connectServices(cfg *config.Config, logger *log.Logger, togglClient client.TogglClient) (err error){
+func connectServices(cfg *config.Config, logger *log.Logger, togglClient client.TogglClient) (err error) {
 	// toggl
 	logger.Println("[INFO] подключение к Toggl...")
 	cfg.TogglUserID, err = togglClient.GetTogglUserID()
 	if err != nil {
 		return err
+	}
+
+	ok, err := togglClient.IsWorkspaceExists(cfg.TogglWorkspaceID)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return fmt.Errorf("Toggl workspace ID %s не найден", cfg.TogglWorkspaceID)
 	}
 
 	// planfix
@@ -133,12 +141,14 @@ func main() {
 		logger.Printf("[ERROR] %s", err.Error())
 	}
 
-	if(isValid){
+	if isValid {
 		// start tag cleaner
 		go togglClient.RunTagCleaner()
 
 		// start sender
 		go togglClient.RunSender()
+	} else {
+		util.OpenBrowser("https://localhost:8097")
 	}
 
 	// start API server
