@@ -107,7 +107,7 @@ func (s Server) getEntriesCtrl(w http.ResponseWriter, r *http.Request) {
 
 // GET /v1/config
 func (s Server) getConfigCtrl(w http.ResponseWriter, r *http.Request) {
-	render.JSON(w, r, s.Config)
+	render.JSON(w, r, config.GetConfig())
 }
 
 // POST /v1/config
