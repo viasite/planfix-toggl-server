@@ -68,7 +68,7 @@ func connectServices(cfg *config.Config, logger *log.Logger, togglClient client.
 			return err
 		}
 		logger.Println("[INFO] получение данных аналитики Планфикса...")
-		_, err := togglClient.GetAnaliticData(
+		_, err := togglClient.GetAnaliticDataCached(
 			cfg.PlanfixAnaliticName,
 			cfg.PlanfixAnaliticTypeName,
 			cfg.PlanfixAnaliticTypeValue,
@@ -144,8 +144,8 @@ func main() {
 	// start API server
 	server := rest.Server{
 		Version:     version,
-		TogglClient: togglClient,
-		Config:      cfg,
+		TogglClient: &togglClient,
+		Config:      &cfg,
 		Logger:      logger,
 	}
 	server.Run()

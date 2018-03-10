@@ -16,13 +16,14 @@ import (
 	"time"
 	"encoding/json"
 	"github.com/popstas/planfix-go/planfix"
+	"github.com/popstas/go-toggl"
 )
 
 // Server is a rest with store
 type Server struct {
 	Version     string
-	TogglClient client.TogglClient
-	Config      config.Config
+	TogglClient *client.TogglClient
+	Config      *config.Config
 	Logger      *log.Logger
 }
 
@@ -48,6 +49,7 @@ func (s Server) Run() {
 			r.Get("/entries/planfix/{taskID}", s.getPlanfixTaskCtrl)
 			r.Get("/entries/planfix/{taskID}/last", s.getPlanfixTaskLastCtrl)
 			r.Get("/user", s.getTogglUser)
+			r.Get("/workspaces", s.getTogglWorkspaces)
 		})
 
 		// config
@@ -55,6 +57,7 @@ func (s Server) Run() {
 			r.Get("/", s.getConfigCtrl)
 			r.Options("/", s.updateConfigCtrl)
 			r.Post("/", s.updateConfigCtrl)
+			r.Post("/reload", s.reloadConfigCtrl)
 		})
 
 		// planfix
@@ -141,7 +144,7 @@ func (s Server) updateConfigCtrl(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&newConfig)
 	if err != nil {
-		s.Logger.Printf("Cannot decode %v", err.Error())
+		s.Logger.Printf("[ERROR] Cannot decode %v", err.Error())
 	}
 
 	errors, _ := newConfig.Validate()
@@ -149,6 +152,14 @@ func (s Server) updateConfigCtrl(w http.ResponseWriter, r *http.Request) {
 		newConfig.SaveConfig()
 	}
 	render.JSON(w, r, errors)
+}
+
+// POST /v1/config/reload
+func (s *Server) reloadConfigCtrl(w http.ResponseWriter, r *http.Request) {
+	newConfig := config.GetConfig()
+	s.Config = &newConfig
+	s.TogglClient.Config = &newConfig
+	s.TogglClient.ReloadConfig()
 }
 
 // TODO
@@ -159,34 +170,53 @@ func (s Server) getValidateConfigCtrl(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, errors)
 }
 
+type ResponseJSON struct {
+	Errors []string `json:"errors"`
+	Data interface{} `json:"data"`
+}
+
 // GET /api/v1/planfix/user
 func (s Server) getPlanfixUser(w http.ResponseWriter, r *http.Request) {
 	var user planfix.XMLResponseUserGet
+	var errors []string;
 	user, err := s.TogglClient.PlanfixAPI.UserGet(0)
 	if err != nil {
-		w.WriteHeader(400)
 		msg := "Не удалось получить Planfix UserID, проверьте PlanfixAPIKey, PlanfixAPIUrl, PlanfixUserName, PlanfixUserPassword, %s"
-		w.Write([]byte(fmt.Sprintf(msg, err.Error())))
-		return
+		errors = append(errors, fmt.Sprintf(msg, err.Error()))
 	}
-	render.JSON(w, r, user.User)
+	render.JSON(w, r, ResponseJSON{errors, user.User} )
 }
 
 // GET /api/v1/toggl/user
 func (s Server) getTogglUser(w http.ResponseWriter, r *http.Request) {
-	var user planfix.XMLResponseUserGet
-	user, err := s.TogglClient.PlanfixAPI.UserGet(0)
+	var user toggl.Account
+	var errors []string;
+	user, err := s.TogglClient.Session.GetAccount()
 	if err != nil {
-		w.WriteHeader(400)
-		msg := "Не удалось получить Planfix UserID, проверьте PlanfixAPIKey, PlanfixAPIUrl, PlanfixUserName, PlanfixUserPassword, %s"
-		w.Write([]byte(fmt.Sprintf(msg, err.Error())))
-		return
+		msg := "Не удалось получить Toggl UserID, проверьте TogglAPIToken, %s"
+		errors = append(errors, fmt.Sprintf(msg, err.Error()))
 	}
-	render.JSON(w, r, user.User)
+
+	render.JSON(w, r, ResponseJSON{errors, user.Data})
+}
+
+// GET /api/v1/toggl/workspaces
+func (s Server) getTogglWorkspaces(w http.ResponseWriter, r *http.Request) {
+	var workspaces []toggl.Workspace
+	var errors []string;
+	workspaces, err := s.TogglClient.Session.GetWorkspaces(s.Config.TogglWorkspaceID)
+	if err != nil {
+		msg := "Не удалось получить Toggl workspaces, проверьте TogglAPIToken, %s"
+		errors = append(errors, fmt.Sprintf(msg, err.Error()))
+	}
+
+	render.JSON(w, r, ResponseJSON{errors, workspaces})
 }
 
 // GET /api/v1/planfix/analitic-ids
-func (s Server) getPlanfixAnalitic(w http.ResponseWriter, r *http.Request) {
+// * нужна, чтобы конфиг новый подтянулся после ConfigReload
+func (s *Server) getPlanfixAnalitic(w http.ResponseWriter, r *http.Request) {
+	var errors []string;
 	analitic, err := s.TogglClient.GetAnaliticData(
 		s.Config.PlanfixAnaliticName,
 		s.Config.PlanfixAnaliticTypeName,
@@ -197,11 +227,11 @@ func (s Server) getPlanfixAnalitic(w http.ResponseWriter, r *http.Request) {
 		s.Config.PlanfixAnaliticUsersName,
 	)
 	if err != nil {
-		w.WriteHeader(400)
-		w.Write([]byte(fmt.Sprintf("Поля аналитики указаны неправильно: %s", err.Error())))
-		return
+		msg := "Поля аналитики указаны неправильно: %s"
+		errors = append(errors, fmt.Sprintf(msg, err.Error()))
 	}
-	render.JSON(w, r, analitic)
+
+	render.JSON(w, r, ResponseJSON{errors, analitic})
 }
 
 // GET /toggl/entries/planfix/{taskID}

@@ -23,6 +23,7 @@ type TogglSession interface {
 	GetDetailedReport(workspace int, since, until string, page int) (toggl.DetailedReport, error)
 	GetDetailedReportV2(rp toggl.DetailedReportParams) (toggl.DetailedReport, error)
 	GetTagByName(name string, wid int) (tag toggl.Tag, err error)
+	GetWorkspaces(wid int) (workspaces []toggl.Workspace, err error)
 }
 
 // TogglClient - Клиент, общающийся с Toggl и Планфиксом
@@ -79,6 +80,19 @@ func (c TogglClient) RunSender() {
 		c.SendToPlanfix()
 		time.Sleep(time.Duration(c.Config.SendInterval) * time.Minute)
 	}
+}
+
+// RunTagCleaner - запускалка цикла очистки запущенных toggl-записей от тега sent
+func (c *TogglClient) ReloadConfig() {
+	c.PlanfixAPI = planfix.New(
+		c.Config.PlanfixAPIUrl,
+		c.Config.PlanfixAPIKey,
+		c.Config.PlanfixAccount,
+		c.Config.PlanfixUserName,
+		c.Config.PlanfixUserPassword,
+	)
+	sess := toggl.OpenSession(c.Config.TogglAPIToken)
+	c.Session = &sess
 }
 
 // RunTagCleaner - запускалка цикла очистки запущенных toggl-записей от тега sent
@@ -439,12 +453,16 @@ func (c TogglClient) sendWithPlanfixAPI(planfixTaskID int, date string, mins int
 	return err
 }
 
-// getAnaliticData получает ID аналитики и ее полей из названий аналитики и полей
-func (c *TogglClient) GetAnaliticData(name, typeName, typeValue, countName, commentName, dateName, usersName string) (PlanfixAnaliticData, error) {
+// GetAnaliticDataCached получает аналитику из кеша (по возможности)
+func (c *TogglClient) GetAnaliticDataCached(name, typeName, typeValue, countName, commentName, dateName, usersName string) (PlanfixAnaliticData, error) {
 	if c.analiticData.ID != 0 { // only on first call
 		return c.analiticData, nil
 	}
+	return c.GetAnaliticData(name, typeName, typeValue, countName, commentName, dateName, usersName)
+}
 
+// GetAnaliticData получает ID аналитики и ее полей из названий аналитики и полей
+func (c *TogglClient) GetAnaliticData(name, typeName, typeValue, countName, commentName, dateName, usersName string) (PlanfixAnaliticData, error) {
 	// получение аналитики
 	analitic, err := c.PlanfixAPI.GetAnaliticByName(name)
 	if err != nil {
