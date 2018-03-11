@@ -1,5 +1,33 @@
 <a name=""></a>
-#  (2018-03-04)
+#  (2018-03-11)
+
+
+
+<a name="0.5.0"></a>
+# [0.5.0](https://github.com/viasite/planfix-toggl-server/compare/0.4.1...0.5.0) (2018-03-11)
+
+
+### Bug Fixes
+
+* /api/v1/toggl/planfix-task -> /api/v1/toggl/entries/planfix ([9d7d851](https://github.com/viasite/planfix-toggl-server/commit/9d7d851))
+* всегда отдавать последнюю версию конфига из файла, а не из рантайма ([7456e01](https://github.com/viasite/planfix-toggl-server/commit/7456e01)), closes [#7](https://github.com/viasite/planfix-toggl-server/issues/7)
+* запуск веб-интерфейса даже если конфиг неправильный ([2ba2645](https://github.com/viasite/planfix-toggl-server/commit/2ba2645)), closes [#7](https://github.com/viasite/planfix-toggl-server/issues/7)
+* запуск веб-интерфейса даже если конфиг неправильный ([30d3f57](https://github.com/viasite/planfix-toggl-server/commit/30d3f57)), closes [#7](https://github.com/viasite/planfix-toggl-server/issues/7)
+
+
+### Features
+
+* /api/v1/config/reload, подменяет в рантайме все конфиги ([a446b0b](https://github.com/viasite/planfix-toggl-server/commit/a446b0b)), closes [#7](https://github.com/viasite/planfix-toggl-server/issues/7)
+* https, GetEntriesV2, GetEntriesByTag, api /toggl/planfix-task/{taskID}, /toggl/planfix-task/{taskID}/last ([2cff548](https://github.com/viasite/planfix-toggl-server/commit/2cff548))
+* windows icon ([aea1a57](https://github.com/viasite/planfix-toggl-server/commit/aea1a57))
+* открывать веб-интерфейс в случае ошибки, проверяется соответствие toggl workspace id ([0ce06f8](https://github.com/viasite/planfix-toggl-server/commit/0ce06f8)), closes [#7](https://github.com/viasite/planfix-toggl-server/issues/7)
+* проверка конфига на пустые поля ([f9493e0](https://github.com/viasite/planfix-toggl-server/commit/f9493e0))
+* сохранение и загрузка конфига по /api/v1/config ([1471314](https://github.com/viasite/planfix-toggl-server/commit/1471314)), closes [#7](https://github.com/viasite/planfix-toggl-server/issues/7)
+
+
+### BREAKING CHANGES
+
+* урл интерфейса сменился с http://localhost:8096 на https://localhost:8097
 
 
 
