@@ -1,10 +1,10 @@
 package util
 
 import (
-	"runtime"
-	"os/exec"
 	"fmt"
 	"log"
+	"os/exec"
+	"runtime"
 )
 
 func OpenBrowser(url string) {

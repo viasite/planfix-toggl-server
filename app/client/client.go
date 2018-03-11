@@ -5,6 +5,7 @@ import (
 	"github.com/popstas/go-toggl"
 	"github.com/popstas/planfix-go/planfix"
 	"github.com/viasite/planfix-toggl-server/app/config"
+	"io/ioutil"
 	"log"
 	"math"
 	"net/smtp"
@@ -14,13 +15,13 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"io/ioutil"
 )
 
 type TogglSession interface {
 	GetAccount() (toggl.Account, error)
 	AddRemoveTag(entryID int, tag string, add bool) (toggl.TimeEntry, error)
 	GetCurrentTimeEntry() (toggl.TimeEntry, error)
+	GetSummaryReport(workspace int, since, until string) (toggl.SummaryReport, error)
 	GetDetailedReport(workspace int, since, until string, page int) (toggl.DetailedReport, error)
 	GetDetailedReportV2(rp toggl.DetailedReportParams) (toggl.DetailedReport, error)
 	GetTagByName(name string, wid int) (tag toggl.Tag, err error)

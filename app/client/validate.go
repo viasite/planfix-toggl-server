@@ -1,8 +1,8 @@
 package client
 
 import (
-	"github.com/viasite/planfix-toggl-server/app/config"
 	"fmt"
+	"github.com/viasite/planfix-toggl-server/app/config"
 )
 
 // Validator - интерфейс структуры валидатора
