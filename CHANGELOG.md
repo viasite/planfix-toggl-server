@@ -2,6 +2,11 @@
 #  (2018-03-11)
 
 
+### Features
+
+* /api/v1/planfix/analitics для выбиралки аналитик ([080aae4](https://github.com/viasite/planfix-toggl-server/commit/080aae4)), closes [#7](https://github.com/viasite/planfix-toggl-server/issues/7)
+
+
 
 <a name="0.5.0"></a>
 # [0.5.0](https://github.com/viasite/planfix-toggl-server/compare/0.4.1...0.5.0) (2018-03-11)
