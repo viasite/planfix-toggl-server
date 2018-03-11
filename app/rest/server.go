@@ -10,12 +10,13 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
 
+	"encoding/json"
 	"fmt"
+	"github.com/popstas/go-toggl"
+	"github.com/popstas/planfix-go/planfix"
 	"github.com/viasite/planfix-toggl-server/app/client"
 	"github.com/viasite/planfix-toggl-server/app/config"
 	"time"
-	"encoding/json"
-	"github.com/popstas/go-toggl"
 )
 
 // Server is a rest with store
@@ -60,6 +61,7 @@ func (s Server) Run() {
 		// planfix
 		r.Route("/planfix", func(r chi.Router) {
 			r.Get("/user", s.getPlanfixUser)
+			r.Get("/analitics", s.getPlanfixAnalitics)
 		})
 
 		// validate
@@ -205,10 +207,22 @@ func (s Server) getPlanfixUser(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, ValidatorStatus{ok, errors, data})
 }
 
+// GET /api/v1/planfix/analitics
+func (s Server) getPlanfixAnalitics(w http.ResponseWriter, r *http.Request) {
+	var analiticList planfix.XMLResponseAnaliticGetList
+	analiticList, err := s.TogglClient.PlanfixAPI.AnaliticGetList(0)
+	if err != nil {
+		render.Status(r, 400)
+		render.PlainText(w, r, err.Error())
+	}
+
+	render.JSON(w, r, analiticList.Analitics)
+}
+
 // GET /api/v1/toggl/user
 func (s Server) getTogglUser(w http.ResponseWriter, r *http.Request) {
 	var user toggl.Account
-	var errors []string;
+	var errors []string
 	user, err := s.TogglClient.Session.GetAccount()
 	if err != nil {
 		msg := "Не удалось получить Toggl UserID, проверьте TogglAPIToken, %s"
@@ -221,7 +235,7 @@ func (s Server) getTogglUser(w http.ResponseWriter, r *http.Request) {
 // GET /api/v1/toggl/workspaces
 func (s Server) getTogglWorkspaces(w http.ResponseWriter, r *http.Request) {
 	var workspaces []toggl.Workspace
-	var errors []string;
+	var errors []string
 	workspaces, err := s.TogglClient.Session.GetWorkspaces()
 	if err != nil {
 		msg := "Не удалось получить Toggl workspaces, проверьте TogglAPIToken, %s"
