@@ -14,8 +14,7 @@ script:
   - bash ./scripts/build-dist.sh
 deploy:
   provider: releases
-  api_key:
-    secure: UUyAmkrStiBSwR8EtO2VQJ6GEbr1xOzKEvfzS0fv3P/89bP9Xare/w3qfVLKkV13rXmnxuNe5WlBJAeTTfTyUn4ITWk2hTvpxTVR5soUVdt+rxKu6qtwNKBsq+S7Zqgkz/5Zkf9J1yO1rok7+PY+6lBrSBq3TBUevxiNj8J85giy16uqEIbcP8sUXs2iWT64Xdali/meM9uERKjJ4+/O3ATjVRdOsNtsoUBhe9jsraIClxSRJf87Aty4UMDNUWCsSU7W/vp44BCE+jxyTzKfUCJwmzLYTMxh7cZ9p1qs5fdEYetdMcFvQ3GoTMHeT5l/dHInU1/hsEt5143OjkUP9OVLkRsnW6ruD0XgdJYVuZJ1HhDndkH1mmMuk9sAOi1ALGzErndSFpDathVcwRjJWZtHdZwVrxbqBU/6Vq5hkMIXIeAXmuzVJ7Re08Skz2/7CuXaYCWR9OW7vGeXb+jSmwrArI/CgxagM6Qkoyn8H/3ye+V5m3IycnBD+Zz1vCZ5a5g99BN/dQnboGPRv8Y5CnN+fSq0ukP5DFNUJUIMXCN+QbFPSfQKXw/wnvAjtBRklupeN0UrtnBPQWKleWajKOnW4UmQ+Hsc4cum4Zlw0NQ1fm+SVFk+16tNru6RLEGrq//LPq9MQ1Ege67NDxvH10cyeLB1rjH9rPFHxO2IbYo=
+  api_key: $GH_TOKEN
   file_glob: true
   file: build/dist/*
   skip_cleanup: true
