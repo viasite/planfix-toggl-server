@@ -300,8 +300,8 @@ func TestTogglClient_GetPlanfixUser(t *testing.T) {
 	})
 	c.PlanfixAPI.URL = ms.URL
 
-	planfixUserID := c.GetPlanfixUserID()
-	assert.Equal(t, 9230, planfixUserID)
+	planfixUser, _ := c.GetPlanfixUser()
+	assert.Equal(t, 9230, planfixUser.ID)
 }
 
 func TestTogglClient_GetEntries(t *testing.T) {
