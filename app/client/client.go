@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"io/ioutil"
 )
 
 type TogglSession interface {
@@ -68,10 +69,18 @@ type PlanfixAnaliticData struct {
 	UsersID     int
 }
 
+// Run запускает фоновые процессы
+func (c TogglClient) Run() {
+	// start tag cleaner
+	go c.RunTagCleaner()
+	// start sender
+	go c.RunSender()
+}
+
 // RunSender - запускалка цикла отправки накопившихся toggl-записей
 func (c TogglClient) RunSender() {
 	if c.Config.SendInterval <= 0 {
-		c.Logger.Println("[INFO] No send interval, sending disabled")
+		c.Logger.Println("[INFO] Интервал отправки не установлен, периодическая отправка отключена")
 		return
 	}
 
@@ -82,7 +91,7 @@ func (c TogglClient) RunSender() {
 	}
 }
 
-// RunTagCleaner - запускалка цикла очистки запущенных toggl-записей от тега sent
+// ReloadConfig - пересоздает API из последней версии конфига
 func (c *TogglClient) ReloadConfig() {
 	c.PlanfixAPI = planfix.New(
 		c.Config.PlanfixAPIUrl,
@@ -91,6 +100,12 @@ func (c *TogglClient) ReloadConfig() {
 		c.Config.PlanfixUserName,
 		c.Config.PlanfixUserPassword,
 	)
+	if !c.Config.Debug {
+		c.PlanfixAPI.Logger.SetFlags(0)
+		c.PlanfixAPI.Logger.SetOutput(ioutil.Discard)
+	}
+	c.PlanfixAPI.UserAgent = "planfix-toggl"
+
 	sess := toggl.OpenSession(c.Config.TogglAPIToken)
 	c.Session = &sess
 }
@@ -101,14 +116,14 @@ func (c TogglClient) RunTagCleaner() {
 	for {
 		entry, err := c.Session.GetCurrentTimeEntry()
 		if err != nil {
-			c.Logger.Println("[ERROR] failed to get current toggl entry")
+			c.Logger.Println("[ERROR] не удалось получить текущую toggl-запись")
 			continue
 		}
 
 		// delete sent tag
 		for _, tag := range entry.Tags {
 			if tag == c.Config.TogglSentTag {
-				c.Logger.Printf("[INFO] removed %s tag from current toggl entry", c.Config.TogglSentTag)
+				c.Logger.Printf("[INFO] убран тег %s из текущей записи %s", c.Config.TogglSentTag, entry.Description)
 				c.Session.AddRemoveTag(entry.ID, c.Config.TogglSentTag, false)
 			}
 		}
@@ -206,20 +221,20 @@ func (c TogglClient) getSumEntryName(entries []TogglPlanfixEntry) string {
 	return strings.Join(names, "\n")
 }
 
-// GetTogglUserID возвращает ID юзера в Toggl
-func (c TogglClient) GetTogglUserID() (int, error) {
-	account, err := c.Session.GetAccount()
+// GetTogglUser возвращает юзера в Toggl
+func (c TogglClient) GetTogglUser() (account toggl.Account, err error) {
+	account, err = c.Session.GetAccount()
 	if err != nil {
-		return 0, fmt.Errorf("Не удалось получить Toggl UserID, проверьте TogglAPIToken, %s", err.Error())
+		return account, fmt.Errorf("Не удалось получить Toggl UserID, проверьте TogglAPIToken, %s", err.Error())
 	}
-	return account.Data.ID, nil
+	return account, nil
 }
 
-// GetTogglUserID возвращает ID юзера в Toggl
+// IsWorkspaceExists проверяет наличие workspace в доступных
 func (c TogglClient) IsWorkspaceExists(wid int) (bool, error) {
 	ws, err := c.Session.GetWorkspaces()
 	if err != nil {
-		return false, fmt.Errorf("Не удалось получить Toggl UserID, проверьте TogglAPIToken, %s", err.Error())
+		return false, fmt.Errorf("Не удалось получить Toggl workspaces, проверьте TogglAPIToken, %s", err.Error())
 	}
 	for _, w := range ws {
 		if w.ID == wid {
@@ -229,14 +244,15 @@ func (c TogglClient) IsWorkspaceExists(wid int) (bool, error) {
 	return false, nil
 }
 
-// GetPlanfixUserID возвращает ID юзера в Планфиксе
-func (c TogglClient) GetPlanfixUserID() (int, error) {
-	var user planfix.XMLResponseUserGet
-	user, err := c.PlanfixAPI.UserGet(0)
+// GetPlanfixUser возвращает юзера в Планфиксе
+func (c TogglClient) GetPlanfixUser() (user planfix.XMLResponseUser, err error) {
+	var userResponse planfix.XMLResponseUserGet
+	userResponse, err = c.PlanfixAPI.UserGet(0)
+	user = userResponse.User
 	if err != nil {
-		return 0, fmt.Errorf("Не удалось получить Planfix UserID, проверьте PlanfixAPIKey, PlanfixAPIUrl, PlanfixUserName, PlanfixUserPassword, %s", err.Error())
+		return user, fmt.Errorf("Не удалось получить Planfix UserID, проверьте PlanfixAPIKey, PlanfixAPIUrl, PlanfixUserName, PlanfixUserPassword, %s", err.Error())
 	}
-	return user.User.ID, nil
+	return user, nil
 }
 
 func (c TogglClient) ReportToTogglPlanfixEntry(report toggl.DetailedReport) (entries []TogglPlanfixEntry) {

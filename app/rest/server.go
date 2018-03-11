@@ -15,7 +15,6 @@ import (
 	"github.com/viasite/planfix-toggl-server/app/config"
 	"time"
 	"encoding/json"
-	"github.com/popstas/planfix-go/planfix"
 	"github.com/popstas/go-toggl"
 )
 
@@ -41,8 +40,6 @@ func (s Server) Run() {
 	router.Route("/api/v1", func(r chi.Router) {
 		r.Use(Logger())
 
-		r.Get("/params", s.getParamsCtrl)
-
 		// toggl
 		r.Route("/toggl", func(r chi.Router) {
 			r.Get("/entries", s.getEntriesCtrl)
@@ -63,12 +60,15 @@ func (s Server) Run() {
 		// planfix
 		r.Route("/planfix", func(r chi.Router) {
 			r.Get("/user", s.getPlanfixUser)
-			r.Get("/analitic-ids", s.getPlanfixAnalitic)
 		})
 
 		// validate
 		r.Route("/validate", func(r chi.Router) {
-			r.Get("/config", s.getValidateConfigCtrl)
+			r.Get("/config", s.validateConfig)
+			r.Get("/planfix/user", s.validatePlanfixUser)
+			r.Get("/planfix/analitic", s.validatePlanfixAnalitic)
+			r.Get("/toggl/user", s.validateTogglUser)
+			r.Get("/toggl/workspace", s.validateTogglWorkspace)
 		})
 	})
 
@@ -162,29 +162,47 @@ func (s *Server) reloadConfigCtrl(w http.ResponseWriter, r *http.Request) {
 	s.TogglClient.ReloadConfig()
 }
 
-// TODO
-// GET /validate/config
-func (s Server) getValidateConfigCtrl(w http.ResponseWriter, r *http.Request) {
-	errors, _ := s.Config.Validate()
-	//getValidateConfigCtrl
-	render.JSON(w, r, errors)
-}
-
-type ResponseJSON struct {
+type ValidatorStatus struct {
+	Ok     bool        `json:"ok"`
 	Errors []string    `json:"errors"`
 	Data   interface{} `json:"data"`
 }
 
+// GET /api/v1/validate/config
+func (s Server) validateConfig(w http.ResponseWriter, r *http.Request) {
+	v := client.ConfigValidator{s.Config}
+	render.JSON(w, r, client.StatusFromCheck(v.Check()))
+}
+
+// GET /api/v1/validate/planfix/user
+func (s Server) validatePlanfixUser(w http.ResponseWriter, r *http.Request) {
+	v := client.PlanfixUserValidator{s.TogglClient}
+	render.JSON(w, r, client.StatusFromCheck(v.Check()))
+}
+
+// GET /api/v1/validate/planfix/analitic
+func (s Server) validatePlanfixAnalitic(w http.ResponseWriter, r *http.Request) {
+	v := client.PlanfixAnaliticValidator{s.TogglClient}
+	render.JSON(w, r, client.StatusFromCheck(v.Check()))
+}
+
+// GET /api/v1/validate/toggl/user
+func (s Server) validateTogglUser(w http.ResponseWriter, r *http.Request) {
+	v := client.TogglUserValidator{s.TogglClient}
+	render.JSON(w, r, client.StatusFromCheck(v.Check()))
+}
+
+// GET /api/v1/validate/toggl/workspace
+func (s Server) validateTogglWorkspace(w http.ResponseWriter, r *http.Request) {
+	v := client.TogglWorkspaceValidator{s.TogglClient}
+	render.JSON(w, r, client.StatusFromCheck(v.Check()))
+}
+
 // GET /api/v1/planfix/user
 func (s Server) getPlanfixUser(w http.ResponseWriter, r *http.Request) {
-	var user planfix.XMLResponseUserGet
-	var errors []string;
-	user, err := s.TogglClient.PlanfixAPI.UserGet(0)
-	if err != nil {
-		msg := "Не удалось получить Planfix UserID, проверьте PlanfixAPIKey, PlanfixAPIUrl, PlanfixUserName, PlanfixUserPassword, %s"
-		errors = append(errors, fmt.Sprintf(msg, err.Error()))
-	}
-	render.JSON(w, r, ResponseJSON{errors, user.User})
+	v := client.PlanfixUserValidator{s.TogglClient}
+	errors, ok, data := v.Check()
+	render.JSON(w, r, ValidatorStatus{ok, errors, data})
 }
 
 // GET /api/v1/toggl/user
@@ -197,7 +215,7 @@ func (s Server) getTogglUser(w http.ResponseWriter, r *http.Request) {
 		errors = append(errors, fmt.Sprintf(msg, err.Error()))
 	}
 
-	render.JSON(w, r, ResponseJSON{errors, user.Data})
+	render.JSON(w, r, ValidatorStatus{err == nil, errors, user.Data})
 }
 
 // GET /api/v1/toggl/workspaces
@@ -210,28 +228,7 @@ func (s Server) getTogglWorkspaces(w http.ResponseWriter, r *http.Request) {
 		errors = append(errors, fmt.Sprintf(msg, err.Error()))
 	}
 
-	render.JSON(w, r, ResponseJSON{errors, workspaces})
-}
-
-// GET /api/v1/planfix/analitic-ids
-// * нужна, чтобы конфиг новый подтянулся после ConfigReload
-func (s *Server) getPlanfixAnalitic(w http.ResponseWriter, r *http.Request) {
-	var errors []string;
-	analitic, err := s.TogglClient.GetAnaliticData(
-		s.Config.PlanfixAnaliticName,
-		s.Config.PlanfixAnaliticTypeName,
-		s.Config.PlanfixAnaliticTypeValue,
-		s.Config.PlanfixAnaliticCountName,
-		s.Config.PlanfixAnaliticCommentName,
-		s.Config.PlanfixAnaliticDateName,
-		s.Config.PlanfixAnaliticUsersName,
-	)
-	if err != nil {
-		msg := "Поля аналитики указаны неправильно: %s"
-		errors = append(errors, fmt.Sprintf(msg, err.Error()))
-	}
-
-	render.JSON(w, r, ResponseJSON{errors, analitic})
+	render.JSON(w, r, ValidatorStatus{err == nil, errors, workspaces})
 }
 
 // GET /toggl/entries/planfix/{taskID}
@@ -250,16 +247,6 @@ func (s Server) getPlanfixTaskLastCtrl(w http.ResponseWriter, r *http.Request) {
 	} else {
 		render.JSON(w, r, entries)
 	}
-}
-
-// GET /params
-func (s Server) getParamsCtrl(w http.ResponseWriter, r *http.Request) {
-	params := struct {
-		PlanfixAccount string `json:"planfix_account"`
-	}{
-		PlanfixAccount: s.Config.PlanfixAccount,
-	}
-	render.JSON(w, r, params)
 }
 
 // serves static files from ./docroot

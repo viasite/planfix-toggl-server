@@ -8,12 +8,10 @@ import (
 
 	"flag"
 	"github.com/popstas/go-toggl"
-	"github.com/popstas/planfix-go/planfix"
 	"github.com/viasite/planfix-toggl-server/app/client"
 	"github.com/viasite/planfix-toggl-server/app/config"
 	"github.com/viasite/planfix-toggl-server/app/rest"
 	"github.com/viasite/planfix-toggl-server/app/util"
-	"io/ioutil"
 	"runtime"
 )
 
@@ -55,7 +53,8 @@ func parseFlags(cfg *config.Config) {
 func connectServices(cfg *config.Config, logger *log.Logger, togglClient client.TogglClient) (err error) {
 	// toggl
 	logger.Println("[INFO] подключение к Toggl...")
-	cfg.TogglUserID, err = togglClient.GetTogglUserID()
+	account, err := togglClient.GetTogglUser()
+	cfg.TogglUserID = account.Data.ID
 	if err != nil {
 		return err
 	}
@@ -65,18 +64,20 @@ func connectServices(cfg *config.Config, logger *log.Logger, togglClient client.
 		return err
 	}
 	if !ok {
-		return fmt.Errorf("Toggl workspace ID %s не найден", cfg.TogglWorkspaceID)
+		return fmt.Errorf("Toggl workspace ID %d не найден", cfg.TogglWorkspaceID)
 	}
 
 	// planfix
 	if cfg.PlanfixUserName != "" && cfg.PlanfixUserPassword != "" {
 		logger.Println("[INFO] подключение к Планфиксу...")
-		cfg.PlanfixUserID, err = togglClient.GetPlanfixUserID()
+		user, err := togglClient.GetPlanfixUser()
+		cfg.PlanfixUserID = user.ID
 		if err != nil {
 			return err
 		}
+
 		logger.Println("[INFO] получение данных аналитики Планфикса...")
-		_, err := togglClient.GetAnaliticDataCached(
+		_, err = togglClient.GetAnaliticDataCached(
 			cfg.PlanfixAnaliticName,
 			cfg.PlanfixAnaliticTypeName,
 			cfg.PlanfixAnaliticTypeValue,
@@ -111,28 +112,11 @@ func main() {
 		util.HideConsole()
 	}
 
-	// create planfix client
-	planfixAPI := planfix.New(
-		cfg.PlanfixAPIUrl,
-		cfg.PlanfixAPIKey,
-		cfg.PlanfixAccount,
-		cfg.PlanfixUserName,
-		cfg.PlanfixUserPassword,
-	)
-	if !cfg.Debug {
-		planfixAPI.Logger.SetFlags(0)
-		planfixAPI.Logger.SetOutput(ioutil.Discard)
-	}
-	planfixAPI.UserAgent = "planfix-toggl"
-
-	// create toggl client
-	sess := toggl.OpenSession(cfg.TogglAPIToken)
 	togglClient := client.TogglClient{
-		Session:    &sess,
-		Config:     &cfg,
-		PlanfixAPI: planfixAPI,
-		Logger:     logger,
+		Config: &cfg,
+		Logger: logger,
 	}
+	togglClient.ReloadConfig()
 
 	// get planfix and toggl user IDs, for early API check
 	err := connectServices(&cfg, logger, togglClient)
@@ -142,11 +126,7 @@ func main() {
 	}
 
 	if isValid {
-		// start tag cleaner
-		go togglClient.RunTagCleaner()
-
-		// start sender
-		go togglClient.RunSender()
+		togglClient.Run()
 	} else {
 		util.OpenBrowser("https://localhost:8097")
 	}
