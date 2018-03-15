@@ -469,7 +469,7 @@ func TestTogglClient_GetAnaliticData(t *testing.T) {
 	c.Config.PlanfixAnaliticUsersName = "Сотрудник"
 
 	// нормальное поведение
-	analiticData, err := c.GetAnaliticData(
+	analiticData, err := c.GetAnaliticDataCached(
 		c.Config.PlanfixAnaliticName,
 		c.Config.PlanfixAnaliticTypeName,
 		c.Config.PlanfixAnaliticTypeValue,

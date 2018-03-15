@@ -489,7 +489,9 @@ func (c *TogglClient) GetAnaliticDataCached(name, typeName, typeValue, countName
 	if c.analiticData.ID != 0 { // only on first call
 		return c.analiticData, nil
 	}
-	return c.GetAnaliticData(name, typeName, typeValue, countName, commentName, dateName, usersName)
+	data, err := c.GetAnaliticData(name, typeName, typeValue, countName, commentName, dateName, usersName)
+	c.analiticData = data
+	return c.analiticData, err
 }
 
 // GetAnaliticData получает ID аналитики и ее полей из названий аналитики и полей
@@ -529,11 +531,8 @@ func (c *TogglClient) GetAnaliticData(name, typeName, typeValue, countName, comm
 		}
 	}
 
-	if err := c.isAnaliticValid(analiticData); err != nil {
-		return analiticData, err
-	}
-	c.analiticData = analiticData
-	return analiticData, nil
+	err = c.isAnaliticValid(analiticData)
+	return analiticData, err
 }
 
 // isAnaliticValid проходит по всем полям структуры PlanfixAnaliticData и возвращает ошибку, если хоть один ID == 0

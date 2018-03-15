@@ -50,7 +50,7 @@ func parseFlags(cfg *config.Config) {
 	}
 }
 
-func connectServices(cfg *config.Config, logger *log.Logger, togglClient client.TogglClient) (err error) {
+func connectServices(cfg *config.Config, logger *log.Logger, togglClient *client.TogglClient) (err error) {
 	// toggl
 	logger.Println("[INFO] подключение к Toggl...")
 	account, err := togglClient.GetTogglUser()
@@ -119,7 +119,7 @@ func main() {
 	togglClient.ReloadConfig()
 
 	// get planfix and toggl user IDs, for early API check
-	err := connectServices(&cfg, logger, togglClient)
+	err := connectServices(&cfg, logger, &togglClient)
 	if err != nil {
 		isValid = false
 		logger.Printf("[ERROR] %s", err.Error())
