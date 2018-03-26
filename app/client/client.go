@@ -135,24 +135,40 @@ func (c TogglClient) RunTagCleaner() {
 
 // SendToPlanfix получает записи из Toggl и отправляет в Планфикс
 // * нужна, чтобы сохранился c.PlanfixAPI.Sid при авторизации
-func (c *TogglClient) SendToPlanfix() (sumEntries []TogglPlanfixEntry, err error) {
+func (c *TogglClient) SendToPlanfix() (err error) {
 	c.Logger.Println("[INFO] отправка в Планфикс")
 	pendingEntries, err := c.GetPendingEntries()
 	if err != nil {
-		return []TogglPlanfixEntry{}, err
+		return err
 	}
 	c.Logger.Printf("[INFO] в очереди на отправку: %d", len(pendingEntries))
-	grouped := c.GroupEntriesByTask(pendingEntries)
-	for taskID, entries := range grouped {
-		err := c.sendEntries(taskID, entries)
-		taskURL := fmt.Sprintf("https://%s.planfix.ru/task/%d", c.Config.PlanfixAccount, taskID)
-		if err != nil {
-			c.Logger.Printf("[ERROR] записи к задаче %s не удалось отправить", taskURL)
-		} else {
-			c.Logger.Printf("[INFO] записи отправлены на %s", taskURL)
+	days := c.GroupEntriesByDay(pendingEntries)
+	for day, dayEntries := range days {
+		tasks := c.GroupEntriesByTask(dayEntries)
+		for taskID, entries := range tasks {
+			err := c.sendEntries(taskID, entries)
+			taskURL := fmt.Sprintf("https://%s.planfix.ru/task/%d", c.Config.PlanfixAccount, taskID)
+			if err != nil {
+				c.Logger.Printf("[ERROR] записи к задаче %s (%s) не удалось отправить", taskURL, day)
+			} else {
+				c.Logger.Printf("[INFO] записи отправлены на %s (%s)", taskURL, day)
+			}
 		}
 	}
-	return c.SumEntriesGroup(grouped), nil
+	return nil
+}
+
+// GroupEntriesByDay объединяет плоский список toggl-записей в map c ключом - Y-m-d
+func (c TogglClient) GroupEntriesByDay(entries []TogglPlanfixEntry) (grouped map[string][]TogglPlanfixEntry) {
+	grouped = make(map[string][]TogglPlanfixEntry)
+	if len(entries) == 0 {
+		return grouped
+	}
+	for _, entry := range entries {
+		day := entry.Start.Format("02-01-2006")
+		grouped[day] = append(grouped[day], entry)
+	}
+	return grouped
 }
 
 // GroupEntriesByTask объединяет плоский список toggl-записей в map c ключом - ID задачи в Планфиксе

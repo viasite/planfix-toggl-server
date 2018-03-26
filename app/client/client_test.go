@@ -101,63 +101,97 @@ func newClient() TogglClient {
 }
 
 func getTestEntries() []TogglPlanfixEntry {
+	date := getTestDate()
 	return []TogglPlanfixEntry{
 		{
-			toggl.DetailedTimeEntry{Duration: 1},
+			toggl.DetailedTimeEntry{Duration: 1, Start: &date},
 			PlanfixEntryData{TaskID: 1, GroupCount: 1},
 		},
 		{
-			toggl.DetailedTimeEntry{Duration: 2},
+			toggl.DetailedTimeEntry{Duration: 2, Start: &date},
 			PlanfixEntryData{TaskID: 1, GroupCount: 1},
 		},
 		{
-			toggl.DetailedTimeEntry{Duration: 3},
+			toggl.DetailedTimeEntry{Duration: 3, Start: &date},
 			PlanfixEntryData{TaskID: 2, GroupCount: 1},
 		},
 		{
-			toggl.DetailedTimeEntry{Duration: 4},
+			toggl.DetailedTimeEntry{Duration: 4, Start: &date},
 			PlanfixEntryData{TaskID: 2, GroupCount: 1},
 		},
 		{
-			toggl.DetailedTimeEntry{Duration: 5},
+			toggl.DetailedTimeEntry{Duration: 5, Start: &date},
 			PlanfixEntryData{TaskID: 2, GroupCount: 1},
 		},
 		{
-			toggl.DetailedTimeEntry{Duration: 6},
+			toggl.DetailedTimeEntry{Duration: 6, Start: &date},
 			PlanfixEntryData{TaskID: 3, GroupCount: 1},
 		},
 	}
 }
 
 func getTestGroupedEntries() map[int][]TogglPlanfixEntry {
+	date := getTestDate()
 	return map[int][]TogglPlanfixEntry{
 		1: {
 			{
-				toggl.DetailedTimeEntry{Duration: 1},
+				toggl.DetailedTimeEntry{Duration: 1, Start: &date},
 				PlanfixEntryData{TaskID: 1, GroupCount: 1},
 			},
 			{
-				toggl.DetailedTimeEntry{Duration: 2},
+				toggl.DetailedTimeEntry{Duration: 2, Start: &date},
 				PlanfixEntryData{TaskID: 1, GroupCount: 1},
 			},
 		},
 		2: {
 			{
-				toggl.DetailedTimeEntry{Duration: 3},
+				toggl.DetailedTimeEntry{Duration: 3, Start: &date},
 				PlanfixEntryData{TaskID: 2, GroupCount: 1},
 			},
 			{
-				toggl.DetailedTimeEntry{Duration: 4},
+				toggl.DetailedTimeEntry{Duration: 4, Start: &date},
 				PlanfixEntryData{TaskID: 2, GroupCount: 1},
 			},
 			{
-				toggl.DetailedTimeEntry{Duration: 5},
+				toggl.DetailedTimeEntry{Duration: 5, Start: &date},
 				PlanfixEntryData{TaskID: 2, GroupCount: 1},
 			},
 		},
 		3: {
 			{
-				toggl.DetailedTimeEntry{Duration: 6},
+				toggl.DetailedTimeEntry{Duration: 6, Start: &date},
+				PlanfixEntryData{TaskID: 3, GroupCount: 1},
+			},
+		},
+	}
+}
+
+func getTestDayEntries() map[string][]TogglPlanfixEntry {
+	date := getTestDate()
+	return map[string][]TogglPlanfixEntry{
+		date.Format("02-01-2006"): {
+			{
+				toggl.DetailedTimeEntry{Duration: 1, Start: &date},
+				PlanfixEntryData{TaskID: 1, GroupCount: 1},
+			},
+			{
+				toggl.DetailedTimeEntry{Duration: 2, Start: &date},
+				PlanfixEntryData{TaskID: 1, GroupCount: 1},
+			},
+			{
+				toggl.DetailedTimeEntry{Duration: 3, Start: &date},
+				PlanfixEntryData{TaskID: 2, GroupCount: 1},
+			},
+			{
+				toggl.DetailedTimeEntry{Duration: 4, Start: &date},
+				PlanfixEntryData{TaskID: 2, GroupCount: 1},
+			},
+			{
+				toggl.DetailedTimeEntry{Duration: 5, Start: &date},
+				PlanfixEntryData{TaskID: 2, GroupCount: 1},
+			},
+			{
+				toggl.DetailedTimeEntry{Duration: 6, Start: &date},
 				PlanfixEntryData{TaskID: 3, GroupCount: 1},
 			},
 		},
@@ -205,19 +239,20 @@ func getTestDetailedReport() toggl.DetailedReport {
 }
 
 func TestTogglClient_SumEntriesGroup(t *testing.T) {
+	date := getTestDate()
 	c := newClient()
 	groupedEntries := getTestGroupedEntries()
 	expected := []TogglPlanfixEntry{
 		{
-			toggl.DetailedTimeEntry{Duration: 3},
+			toggl.DetailedTimeEntry{Duration: 3, Start: &date},
 			PlanfixEntryData{TaskID: 1, GroupCount: 2},
 		},
 		{
-			toggl.DetailedTimeEntry{Duration: 12},
+			toggl.DetailedTimeEntry{Duration: 12, Start: &date},
 			PlanfixEntryData{TaskID: 2, GroupCount: 3},
 		},
 		{
-			toggl.DetailedTimeEntry{Duration: 6},
+			toggl.DetailedTimeEntry{Duration: 6, Start: &date},
 			PlanfixEntryData{TaskID: 3, GroupCount: 1},
 		},
 	}
@@ -232,6 +267,15 @@ func TestTogglClient_GroupEntriesByTask(t *testing.T) {
 	expected := getTestGroupedEntries()
 
 	grouped := c.GroupEntriesByTask(entries)
+	assert.Equal(t, expected, grouped)
+}
+
+func TestTogglClient_GroupEntriesByDay(t *testing.T) {
+	c := newClient()
+	entries := getTestEntries()
+	expected := getTestDayEntries()
+
+	grouped := c.GroupEntriesByDay(entries)
 	assert.Equal(t, expected, grouped)
 }
 
