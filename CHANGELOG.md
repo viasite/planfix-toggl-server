@@ -1,5 +1,41 @@
 <a name=""></a>
-#  (2018-03-11)
+#  (2018-03-26)
+
+
+
+<a name="0.6.0"></a>
+# [0.6.0](https://github.com/viasite/planfix-toggl-server/compare/0.5.3...0.6.0) (2018-03-26)
+
+
+### Bug Fixes
+
+* теперь пустые SMTP поля конфига выдают ошибку, только если не настроена отправка через Планфикс API ([39fd868](https://github.com/viasite/planfix-toggl-server/commit/39fd868)), closes [#9](https://github.com/viasite/planfix-toggl-server/issues/9)
+
+
+### Features
+
+* отправка более 50 записей за один раз ([6e08d54](https://github.com/viasite/planfix-toggl-server/commit/6e08d54)), closes [#10](https://github.com/viasite/planfix-toggl-server/issues/10)
+* отправка записей с группировкой по дням ([f4b36d9](https://github.com/viasite/planfix-toggl-server/commit/f4b36d9)), closes [#11](https://github.com/viasite/planfix-toggl-server/issues/11)
+
+
+
+<a name="0.5.3"></a>
+## [0.5.3](https://github.com/viasite/planfix-toggl-server/compare/0.5.2...0.5.3) (2018-03-15)
+
+
+### Bug Fixes
+
+* отправка через Планфикс API не работала ([b9b8ffc](https://github.com/viasite/planfix-toggl-server/commit/b9b8ffc))
+
+
+
+<a name="0.5.2"></a>
+## [0.5.2](https://github.com/viasite/planfix-toggl-server/compare/0.5.1...0.5.2) (2018-03-11)
+
+
+
+<a name="0.5.1"></a>
+## [0.5.1](https://github.com/viasite/planfix-toggl-server/compare/0.5.0...0.5.1) (2018-03-11)
 
 
 ### Features
