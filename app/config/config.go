@@ -64,14 +64,6 @@ func (c *Config) SaveConfig() (cfg *Config, err error) {
 }
 
 func (c *Config) Validate() (errors []string, isValid bool) {
-	emptyFields := c.filterNotEmpty(c.GetFields())
-	if len(emptyFields) > 0 {
-		msg := fmt.Sprintf("поля %s пустые",
-			strings.Join(emptyFields, ", "),
-		)
-		errors = append(errors, msg)
-	}
-
 	err := c.isGroupInvalid([]string{
 		"TogglAPIToken",
 		"TogglWorkspaceID",
@@ -87,7 +79,16 @@ func (c *Config) Validate() (errors []string, isValid bool) {
 		"PlanfixUserPassword",
 	})
 	if err != nil {
-		errors = append(errors, "настройки подключения к Планфиксу неправильные")
+		err = c.isGroupInvalid([]string{
+			"SMTPHost",
+			"SMTPPort",
+			"SMTPLogin",
+			"SMTPPassword",
+			"SMTPEmailFrom",
+		})
+		if err != nil {
+			errors = append(errors, "настройки подключения к Планфиксу и настройки SMTP неправильные, нужно настроить что-то одно")
+		}
 	}
 
 	err = c.isGroupInvalid([]string{
