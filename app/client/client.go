@@ -321,7 +321,7 @@ func (c TogglClient) getDetailedReportParams() {
 }
 
 func (c TogglClient) GetEntriesV2(rp toggl.DetailedReportParams) (entries []TogglPlanfixEntry, err error) {
-	report := c.GetReport(toggl.DetailedReportParams{})
+	report := c.GetReport(rp)
 	entries = c.ReportToTogglPlanfixEntry(report)
 	return entries, nil
 }
@@ -349,9 +349,11 @@ func filter(input []TogglPlanfixEntry, f func(entry TogglPlanfixEntry) bool) (ou
 	return output
 }
 
-// GetPendingEntries возвращает toggl-записи, которые должны быть отправлены в Планфикс
-func (c TogglClient) GetPendingEntries() (entries []TogglPlanfixEntry, err error) {
-	entries, err = c.GetEntriesV2(toggl.DetailedReportParams{})
+// GetPendingEntriesPage возвращает toggl-записи, которые должны быть отправлены в Планфикс для конкретной страницы
+func (c TogglClient) getPendingEntriesPage(page int) (entries []TogglPlanfixEntry, err error) {
+	entries, err = c.GetEntriesV2(toggl.DetailedReportParams{
+		Page: page,
+	})
 	if err != nil {
 		return []TogglPlanfixEntry{}, err
 	}
@@ -359,6 +361,22 @@ func (c TogglClient) GetPendingEntries() (entries []TogglPlanfixEntry, err error
 	entries = filter(entries, func(entry TogglPlanfixEntry) bool { return !entry.Planfix.Sent })
 	entries = filter(entries, func(entry TogglPlanfixEntry) bool { return entry.Uid == c.Config.TogglUserID })
 	return entries, nil
+}
+
+// GetPendingEntries возвращает toggl-записи, которые должны быть отправлены в Планфикс
+func (c TogglClient) GetPendingEntries() (entries []TogglPlanfixEntry, err error) {
+	maxPages := 20
+	for currentPage := 1; currentPage <= maxPages; currentPage++ {
+		pageEntries, err := c.getPendingEntriesPage(currentPage)
+		if err != nil {
+			return entries, err
+		}
+		if len(pageEntries) == 0 {
+			break;
+		}
+		entries = append(entries, pageEntries...)
+	}
+	return entries, err
 }
 
 // sendEntries отправляет toggl-записи в Планфикс и помечает их в Toggl тегом sent
