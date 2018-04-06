@@ -109,16 +109,23 @@ func (s Server) getEntriesCtrl(w http.ResponseWriter, r *http.Request) {
 	} else if t == "pending" {
 		entries, err = s.TogglClient.GetPendingEntries()
 	} else if t == "last" {
-		entries, err = s.TogglClient.GetEntries(
-			s.Config.TogglWorkspaceID,
-			time.Now().AddDate(0, 0, -30).Format("2006-01-02"),
-			tomorrow,
-		)
-	}
-	if err != nil {
-		s.Logger.Printf("[WARN] failed to load entries")
-	} else {
-		//status = http.StatusOK
+		var pageEntries []client.TogglPlanfixEntry
+		for currentPage := 1; currentPage <= 10; currentPage++ {
+			pageEntries, err = s.TogglClient.GetEntriesV2(toggl.DetailedReportParams{
+				Page: currentPage,
+				Since: time.Now().AddDate(0, 0, -7),
+				Until: time.Now().AddDate(0, 0, 1),
+			})
+			if err != nil {
+				s.Logger.Printf("[WARN] failed to load entries")
+				break
+			}
+			if len(pageEntries) == 0 {
+				break
+			}
+
+			entries = append(entries, pageEntries...)
+		}
 	}
 
 	entries = s.TogglClient.SumEntriesGroup(s.TogglClient.GroupEntriesByTask(entries))
