@@ -57,7 +57,7 @@ func (c *Config) SaveConfig() (cfg *Config, err error) {
 		return cfg, err
 	}
 	if _, err := os.Stat("config.yml"); err == nil {
-		os.Rename("config.yml", fmt.Sprintf("config-%s.yml", time.Now().Format("2006-02-01 15_04_05")))
+		os.Rename("config.yml", fmt.Sprintf("config-%s.yml", time.Now().Format("2006-01-02 15_04_05")))
 		ioutil.WriteFile("config.yml", cfgString, 0644)
 	}
 	return c, nil
