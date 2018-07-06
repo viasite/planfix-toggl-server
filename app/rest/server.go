@@ -28,9 +28,8 @@ type Server struct {
 }
 
 //Run the lister and request's router, activate rest server
-func (s Server) Run() {
+func (s Server) Run(portSSL int) {
 	//port := 8096
-	portSSL := 8097
 	//s.Logger.Printf("[INFO] запуск сервера на :%d", port)
 
 	router := chi.NewRouter()

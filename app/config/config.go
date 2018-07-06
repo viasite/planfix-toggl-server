@@ -13,6 +13,7 @@ import (
 
 // Config - структура с конфигом приложения
 type Config struct {
+	PortSSL                    int    `env:"PORT_SSL" yaml:"portSSL"`
 	SMTPHost                   string `env:"SMTP_HOST" yaml:"smtpHost"`
 	SMTPPort                   int    `env:"SMTP_PORT" yaml:"smtpPort"`
 	SMTPSecure                 bool   `env:"SMTP_SECURE" yaml:"smtpSecure"`

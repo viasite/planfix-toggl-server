@@ -128,7 +128,7 @@ func main() {
 	if isValid {
 		togglClient.Run()
 	} else {
-		util.OpenBrowser("https://localhost:8097")
+		util.OpenBrowser(fmt.Sprintf("https://localhost:%d", cfg.PortSSL))
 	}
 
 	// start API server
@@ -138,5 +138,5 @@ func main() {
 		Config:      &cfg,
 		Logger:      logger,
 	}
-	server.Run()
+	server.Run(cfg.PortSSL)
 }

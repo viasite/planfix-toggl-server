@@ -1,4 +1,5 @@
 sendInterval: 60 # минут
+portSSL: 8097
 
 togglApiToken:
 togglWorkspaceId:
