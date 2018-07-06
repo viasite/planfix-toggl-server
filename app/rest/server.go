@@ -43,6 +43,7 @@ func (s Server) Run(portSSL int) {
 		// toggl
 		r.Route("/toggl", func(r chi.Router) {
 			r.Get("/entries", s.getEntriesCtrl)
+			r.Get("/entries/current", s.getTogglCurrentCtrl)
 			r.Get("/entries/planfix/{taskID}", s.getPlanfixTaskCtrl)
 			r.Get("/entries/planfix/{taskID}/last", s.getPlanfixTaskLastCtrl)
 			r.Get("/user", s.getTogglUser)
@@ -249,6 +250,12 @@ func (s Server) getTogglWorkspaces(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.JSON(w, r, ValidatorStatus{err == nil, errors, workspaces})
+}
+
+// GET /toggl/entries/current
+func (s Server) getTogglCurrentCtrl(w http.ResponseWriter, r *http.Request) {
+	entry, _ := s.TogglClient.GetCurrentEntry()
+	render.JSON(w, r, entry)
 }
 
 // GET /toggl/entries/planfix/{taskID}

@@ -274,33 +274,58 @@ func (c TogglClient) GetPlanfixUser() (user planfix.XMLResponseUser, err error) 
 
 func (c TogglClient) ReportToTogglPlanfixEntry(report toggl.DetailedReport) (entries []TogglPlanfixEntry) {
 	for _, entry := range report.Data {
-
-		pfe := TogglPlanfixEntry{
-			DetailedTimeEntry: entry,
-			Planfix: PlanfixEntryData{
-				Sent:       false,
-				TaskID:     0,
-				GroupCount: 1,
-			},
-		}
-
-		for _, tag := range entry.Tags {
-			// only digit == planfix.task_id
-			regex := regexp.MustCompile(`^\d+$`)
-			if regex.MatchString(tag) {
-				pfe.Planfix.TaskID, _ = strconv.Atoi(tag)
-			}
-
-			// sent tag
-			if tag == c.Config.TogglSentTag {
-				pfe.Planfix.Sent = true
-			}
-		}
-
+		pfe := c.togglDetailedEntryToPlanfixTogglEntry(entry)
 		entries = append(entries, pfe)
 	}
-
 	return entries
+}
+
+func (c TogglClient) togglEntryToTogglDetailedEntry(entry toggl.TimeEntry) toggl.DetailedTimeEntry{
+	return toggl.DetailedTimeEntry{
+		ID: entry.ID,
+		Pid: entry.Pid,
+		Tid: entry.Tid,
+		Description: entry.Description,
+		Start: entry.Start,
+		End: entry.Stop,
+		Tags: entry.Tags,
+		Duration: entry.Duration,
+		Billable: entry.Billable,
+	}
+}
+
+func (c TogglClient) togglDetailedEntryToPlanfixTogglEntry(entry toggl.DetailedTimeEntry) (pfe TogglPlanfixEntry){
+	pfe = TogglPlanfixEntry{
+		DetailedTimeEntry: entry,
+		Planfix: PlanfixEntryData{
+			Sent:       false,
+			TaskID:     0,
+			GroupCount: 1,
+		},
+	}
+
+	for _, tag := range entry.Tags {
+		// only digit == planfix.task_id
+		regex := regexp.MustCompile(`^\d+$`)
+		if regex.MatchString(tag) {
+			pfe.Planfix.TaskID, _ = strconv.Atoi(tag)
+		}
+
+		// sent tag
+		if tag == c.Config.TogglSentTag {
+			pfe.Planfix.Sent = true
+		}
+	}
+
+	return pfe
+}
+
+// GetEntries получает []toggl.DetailedTimeEntry и превращает их в []TogglPlanfixEntry с подмешенными данными Планфикса
+func (c TogglClient) GetCurrentEntry() (entry TogglPlanfixEntry, err error) {
+	togglEntry, err := c.Session.GetCurrentTimeEntry()
+	detailedEntry := c.togglEntryToTogglDetailedEntry(togglEntry)
+	entry = c.togglDetailedEntryToPlanfixTogglEntry(detailedEntry)
+	return entry, err
 }
 
 // GetEntries получает []toggl.DetailedTimeEntry и превращает их в []TogglPlanfixEntry с подмешенными данными Планфикса
