@@ -1,5 +1,31 @@
 <a name=""></a>
-#  (2018-03-26)
+#  (2018-07-06)
+
+
+
+<a name="0.6.2"></a>
+## [0.6.2](https://github.com/viasite/planfix-toggl-server/compare/0.6.1...0.6.2) (2018-07-06)
+
+
+### Features
+
+* /toggl/entries/current, получение объекта текущей задачи ([7b5efcc](https://github.com/viasite/planfix-toggl-server/commit/7b5efcc))
+
+
+
+<a name="0.6.1"></a>
+## [0.6.1](https://github.com/viasite/planfix-toggl-server/compare/0.5.1...0.6.1) (2018-06-18)
+
+
+### Bug Fixes
+
+* бекапы конфигов назывались неправильно (y-d-m вместо y-m-d) ([82211f6](https://github.com/viasite/planfix-toggl-server/commit/82211f6))
+* сертификаты для localhost с инструкцией по установке ([9efb124](https://github.com/viasite/planfix-toggl-server/commit/9efb124))
+
+
+### Features
+
+* /api/v1/toggl/entries теперь выдает записи за последние 7 дней ([0c6d426](https://github.com/viasite/planfix-toggl-server/commit/0c6d426))
 
 
 
@@ -30,12 +56,7 @@
 
 
 <a name="0.5.2"></a>
-## [0.5.2](https://github.com/viasite/planfix-toggl-server/compare/0.5.1...0.5.2) (2018-03-11)
-
-
-
-<a name="0.5.1"></a>
-## [0.5.1](https://github.com/viasite/planfix-toggl-server/compare/0.5.0...0.5.1) (2018-03-11)
+## [0.5.2](https://github.com/viasite/planfix-toggl-server/compare/0.5.0...0.5.2) (2018-03-11)
 
 
 ### Features
