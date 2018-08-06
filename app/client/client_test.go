@@ -87,6 +87,7 @@ func (s *MockedTogglSession) AddRemoveTag(entryID int, tag string, add bool) (to
 func newClient() TogglClient {
 	cfg := config.Config{
 		TogglSentTag: "sent",
+		Debug: true,
 	}
 	api := planfix.New("", "apiKey", "account", "user", "password")
 	api.Sid = "123"
