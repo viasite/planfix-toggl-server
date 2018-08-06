@@ -38,7 +38,9 @@ func (s Server) Run(portSSL int) {
 	router.Use(CORS)
 
 	router.Route("/api/v1", func(r chi.Router) {
-		r.Use(Logger())
+		if s.Config.Debug {
+			r.Use(Logger())
+		}
 
 		// toggl
 		r.Route("/toggl", func(r chi.Router) {

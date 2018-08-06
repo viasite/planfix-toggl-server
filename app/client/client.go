@@ -437,7 +437,9 @@ func (c TogglClient) sendEntries(planfixTaskID int, entries []TogglPlanfixEntry)
 	)
 	comment := fmt.Sprintf("toggl: %s", entryString)
 
-	c.Logger.Printf("[DEBUG] sending %s", entryString)
+	if c.Config.Debug {
+		c.Logger.Printf("[DEBUG] sending %s", entryString)
+	}
 	if c.Config.DryRun {
 		c.Logger.Println("[DEBUG] dry-run")
 		return nil
@@ -467,7 +469,9 @@ func (c TogglClient) markAsSent(entries []TogglPlanfixEntry) error {
 			entry.Description,
 			int(math.Floor(float64(entry.Duration)/60000+.5)),
 		)
-		c.Logger.Printf("[DEBUG] marking %s in toggl", entryString)
+		if c.Config.Debug {
+			c.Logger.Printf("[DEBUG] marking %s in toggl", entryString)
+		}
 		if _, err := c.Session.AddRemoveTag(entry.ID, c.Config.TogglSentTag, true); err != nil {
 			c.Logger.Println(err)
 			return err
