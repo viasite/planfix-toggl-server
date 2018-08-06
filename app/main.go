@@ -10,9 +10,11 @@ import (
 	"github.com/popstas/go-toggl"
 	"github.com/viasite/planfix-toggl-server/app/client"
 	"github.com/viasite/planfix-toggl-server/app/config"
-	"github.com/viasite/planfix-toggl-server/app/rest"
-	"github.com/viasite/planfix-toggl-server/app/util"
+	"github.com/getlantern/systray"
 	"runtime"
+	"github.com/viasite/planfix-toggl-server/app/icon"
+	"github.com/viasite/planfix-toggl-server/app/util"
+	"github.com/viasite/planfix-toggl-server/app/rest"
 )
 
 var version string
@@ -93,7 +95,7 @@ func connectServices(cfg *config.Config, logger *log.Logger, togglClient *client
 	return nil
 }
 
-func main() {
+func initApp() {
 	fmt.Printf("planfix-toggl %s\n", version)
 	cfg := config.GetConfig()
 
@@ -139,4 +141,35 @@ func main() {
 		Logger:      logger,
 	}
 	server.Run(cfg.PortSSL)
+}
+
+func onReady() {
+	go initApp()
+
+	systray.SetIcon(icon.Data)
+	systray.SetTitle("planfix-toggl")
+	systray.SetTooltip("tooltip")
+
+	mWeb := systray.AddMenuItem("Open web interface", "")
+	mQuit := systray.AddMenuItem("Quit", "Quit the whole app")
+
+	for {
+		select {
+		case <-mQuit.ClickedCh:
+			onExit()
+
+		case <-mWeb.ClickedCh:
+			cfg := config.GetConfig()
+			util.OpenBrowser(fmt.Sprintf("https://localhost:%d", cfg.PortSSL))
+		}
+	}
+}
+
+func onExit() {
+	systray.Quit()
+	//os.Exit(0)
+}
+
+func main() {
+	systray.Run(onReady, onExit)
 }
