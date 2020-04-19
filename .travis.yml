@@ -10,8 +10,8 @@ before_install:
   - go get github.com/stretchr/testify/mock   # test mocks
   - sudo apt-get install libgtk-3-dev libappindicator3-dev libwebkit2gtk-4.0-dev # for linux systray build
 script:
-  - go test -coverprofile=planfix.coverprofile ./...
-  - goveralls -coverprofile=planfix.coverprofile -service=travis-ci -repotoken $COVERALLS_TOKEN
+  - go test -covermode=count -coverprofile=profile.cov ./...
+  - goveralls -coverprofile=profile.cov -service=travis-ci
   - bash ./scripts/build-dist.sh
 deploy:
   provider: releases
