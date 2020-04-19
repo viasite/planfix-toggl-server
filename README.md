@@ -25,7 +25,8 @@
 
 
 ## Установка
-1. Скачайте [последний релиз](https://github.com/viasite/planfix-toggl-server/releases) в папку
+1. Скачайте [последний релиз](https://github.com/viasite/planfix-toggl-server/releases)  
+   [Windows](https://github.com/viasite/planfix-toggl-server/releases/download/0.8.0/planfix-toggl-windows.zip), [Linux](https://github.com/viasite/planfix-toggl-server/releases/download/0.8.0/planfix-toggl-linux.zip), [MacOS](https://github.com/viasite/planfix-toggl-server/releases/download/0.6.4/planfix-toggl-darwin.zip)
 2. Установите сертификат certs/server.crt в систему как доверенный корневой, [подробнее](certs/)
 3. Запустите planfix-toggl-server.exe
 4. Откроется веб-интерфейс, заполните настройки, нажмите все кнопки "Проверить"
