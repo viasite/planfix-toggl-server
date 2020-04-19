@@ -7,17 +7,19 @@ import (
 	"os"
 
 	"flag"
+	//"github.com/gen2brain/beeep"
+	"github.com/getlantern/systray"
 	"github.com/popstas/go-toggl"
 	"github.com/viasite/planfix-toggl-server/app/client"
 	"github.com/viasite/planfix-toggl-server/app/config"
-	"github.com/getlantern/systray"
-	"runtime"
 	"github.com/viasite/planfix-toggl-server/app/icon"
-	"github.com/viasite/planfix-toggl-server/app/util"
 	"github.com/viasite/planfix-toggl-server/app/rest"
+	"github.com/viasite/planfix-toggl-server/app/util"
+	"runtime"
 )
 
 var version string
+var trayMenu map[string] *systray.MenuItem
 
 func getLogger(cfg config.Config) *log.Logger {
 	// logging
@@ -133,6 +135,24 @@ func initApp() {
 		util.OpenBrowser(fmt.Sprintf("https://localhost:%d", cfg.PortSSL))
 	}
 
+	// tray menu actions
+	for {
+		select {
+		case <-trayMenu["web"].ClickedCh:
+			cfg := config.GetConfig()
+			util.OpenBrowser(fmt.Sprintf("https://localhost:%d", cfg.PortSSL))
+
+		case <-trayMenu["send"].ClickedCh:
+			err := togglClient.SendToPlanfix()
+			if err != nil {
+				logger.Println(err)
+			}
+
+		case <-trayMenu["quit"].ClickedCh:
+			onExit()
+		}
+	}
+
 	// start API server
 	server := rest.Server{
 		Version:     version,
@@ -150,19 +170,10 @@ func onReady() {
 	systray.SetTitle("planfix-toggl")
 	systray.SetTooltip("tooltip")
 
-	mWeb := systray.AddMenuItem("Open web interface", "")
-	mQuit := systray.AddMenuItem("Quit", "Quit the whole app")
-
-	for {
-		select {
-		case <-mQuit.ClickedCh:
-			onExit()
-
-		case <-mWeb.ClickedCh:
-			cfg := config.GetConfig()
-			util.OpenBrowser(fmt.Sprintf("https://localhost:%d", cfg.PortSSL))
-		}
-	}
+	trayMenu = make(map[string]*systray.MenuItem)
+	trayMenu["web"] = systray.AddMenuItem("Open web interface", "")
+	trayMenu["send"] = systray.AddMenuItem("Sync", "")
+	trayMenu["quit"] = systray.AddMenuItem("Quit", "Quit the whole app")
 }
 
 func onExit() {

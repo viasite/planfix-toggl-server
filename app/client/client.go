@@ -2,6 +2,7 @@ package client
 
 import (
 	"fmt"
+	"github.com/gen2brain/beeep"
 	"github.com/popstas/go-toggl"
 	"github.com/popstas/planfix-go/planfix"
 	"github.com/viasite/planfix-toggl-server/app/config"
@@ -145,15 +146,19 @@ func (c *TogglClient) SendToPlanfix() (err error) {
 	days := c.GroupEntriesByDay(pendingEntries)
 	for day, dayEntries := range days {
 		tasks := c.GroupEntriesByTask(dayEntries)
+		minsTotal := 0
 		for taskID, entries := range tasks {
-			err := c.sendEntries(taskID, entries)
+			err, mins := c.sendEntries(taskID, entries)
+			minsTotal += mins
 			taskURL := fmt.Sprintf("https://%s.planfix.ru/task/%d", c.Config.PlanfixAccount, taskID)
 			if err != nil {
 				c.Logger.Printf("[ERROR] записи к задаче %s (%s) не удалось отправить: %s", taskURL, day, err)
 			} else {
-				c.Logger.Printf("[INFO] записи отправлены на %s (%s)", taskURL, day)
+				c.Logger.Printf("[INFO] %d минут отправлены на %s (%s)", mins, taskURL, day)
 			}
 		}
+		c.Logger.Printf("[INFO] минут: %d, задач: %d", minsTotal, len(tasks))
+		c.Notify(fmt.Sprintf("Sent %d minutes to %d tasks", minsTotal, len(tasks)))
 	}
 	return nil
 }
@@ -421,7 +426,7 @@ func (c TogglClient) GetPendingEntries() (entries []TogglPlanfixEntry, err error
 }
 
 // sendEntries отправляет toggl-записи в Планфикс и помечает их в Toggl тегом sent
-func (c TogglClient) sendEntries(planfixTaskID int, entries []TogglPlanfixEntry) error {
+func (c TogglClient) sendEntries(planfixTaskID int, entries []TogglPlanfixEntry) (error, int) {
 	// будет точно просуммировано в одну
 	sumEntry := c.SumEntriesGroup(map[int][]TogglPlanfixEntry{
 		planfixTaskID: entries,
@@ -442,7 +447,7 @@ func (c TogglClient) sendEntries(planfixTaskID int, entries []TogglPlanfixEntry)
 	}
 	if c.Config.DryRun {
 		c.Logger.Println("[DEBUG] dry-run")
-		return nil
+		return nil, mins
 	}
 
 	// send to planfix
@@ -454,10 +459,10 @@ func (c TogglClient) sendEntries(planfixTaskID int, entries []TogglPlanfixEntry)
 	}
 	if err != nil {
 		c.Logger.Printf("[ERROR] %v", err)
-		return err
+		return err, mins
 	}
 
-	return c.markAsSent(entries)
+	return c.markAsSent(entries), mins
 }
 
 // markAsSent отмечает toggl-записи тегом sent
@@ -615,4 +620,9 @@ func (c TogglClient) isAnaliticValid(data PlanfixAnaliticData) error {
 		return fmt.Errorf(strings.Join(errors, ", "))
 	}
 	return nil
+}
+
+func (c TogglClient) Notify(msg string) error {
+	err := beeep.Notify("", msg, "assets/icon.png")
+	return err
 }

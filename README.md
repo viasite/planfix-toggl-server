@@ -8,7 +8,7 @@
 
 Вольное описание в [блоге](http://blog.popstas.ru/blog/2018/03/01/planfix-toggl-integration/), конкретное - ниже.
 
-
+![tray demo](assets/tray-demo.png)
 
 ## Правила
 Вы должны указывать записям в Toggl id задач Планфикса в виде тегов, например, 12345.
