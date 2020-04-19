@@ -38,7 +38,7 @@ for os in $oses; do
     mkdir -p "$dir"
 
     # windows manifest
-    if [ os = "windows" ]; then
+    if [ "$os" = "windows" ]; then
       cp windows.manifest "$dir/planfix-toggl-server.exe.manifest"
     fi
 
