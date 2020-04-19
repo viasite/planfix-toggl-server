@@ -7,3 +7,4 @@ planfix-toggl.log
 /docroot/
 !/docroot/.keep
 config-*.yml
+Thumbs.db

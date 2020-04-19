@@ -149,7 +149,7 @@ func (c *TogglClient) SendToPlanfix() (err error) {
 			err := c.sendEntries(taskID, entries)
 			taskURL := fmt.Sprintf("https://%s.planfix.ru/task/%d", c.Config.PlanfixAccount, taskID)
 			if err != nil {
-				c.Logger.Printf("[ERROR] записи к задаче %s (%s) не удалось отправить", taskURL, day)
+				c.Logger.Printf("[ERROR] записи к задаче %s (%s) не удалось отправить: %s", taskURL, day, err)
 			} else {
 				c.Logger.Printf("[INFO] записи отправлены на %s (%s)", taskURL, day)
 			}
