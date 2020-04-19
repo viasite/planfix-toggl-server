@@ -7,9 +7,9 @@ import (
 	"os"
 
 	"flag"
-	//"github.com/gen2brain/beeep"
 	"github.com/getlantern/systray"
 	"github.com/popstas/go-toggl"
+	"github.com/viasite/beeep"
 	"github.com/viasite/planfix-toggl-server/app/client"
 	"github.com/viasite/planfix-toggl-server/app/config"
 	"github.com/viasite/planfix-toggl-server/app/icon"
@@ -52,6 +52,11 @@ func parseFlags(cfg *config.Config) {
 	if *dryRun {
 		cfg.DryRun = true
 	}
+}
+
+func Notify(msg string) error {
+	err := beeep.Notify("", msg, "assets/icon.png")
+	return err
 }
 
 func connectServices(cfg *config.Config, logger *log.Logger, togglClient *client.TogglClient) (err error) {
@@ -127,6 +132,7 @@ func initApp() {
 	if err != nil {
 		isValid = false
 		logger.Printf("[ERROR] %s", err.Error())
+		Notify(err.Error())
 	}
 
 	if isValid {

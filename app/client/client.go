@@ -170,8 +170,9 @@ func (c *TogglClient) SendToPlanfix() (err error) {
 			}
 		}
 		dayHours := float32(c.sentLog[day]) / 60
-		c.Logger.Printf("[INFO] минут: %d, задач: %d, всего %.1f часов за %s", minsTotal, len(tasks), dayHours, day)
-		c.Notify(fmt.Sprintf("Sent %d minutes to %d tasks\n%.1f hours for %s", minsTotal, len(tasks), dayHours, day))
+		msg := fmt.Sprintf("минут: %d, задач: %d, всего %.1f часов за %s", minsTotal, len(tasks), dayHours, day)
+		c.Logger.Printf("[INFO] %s", msg)
+		c.Notify(msg)
 	}
 	return nil
 }
