@@ -1,6 +1,6 @@
 language: go
 go:
-  - '1.10'
+  - '1.14'
 before_install:
   - go get github.com/mitchellh/gox           # cross build
   - go get github.com/akavel/rsrc             # windows icon generate
@@ -8,6 +8,7 @@ before_install:
   - go get github.com/mattn/goveralls         # send to coveralls
   - go get github.com/stretchr/testify/assert # test asserts
   - go get github.com/stretchr/testify/mock   # test mocks
+  - apt install libgtk-3-dev libappindicator3-dev libwebkit2gtk-4.0-dev # for linux systray build
 script:
   - go test -coverprofile=planfix.coverprofile ./...
   - goveralls -coverprofile=planfix.coverprofile -service=travis-ci -repotoken $COVERALLS_TOKEN
