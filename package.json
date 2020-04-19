@@ -1,6 +1,6 @@
 {
   "name": "planfix-toggl-server",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Отправка данных из Toggl в Planfix",
   "scripts": {
     "version": "npm run changelog && git add CHANGELOG.md",

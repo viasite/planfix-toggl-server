@@ -1,9 +1,41 @@
-<a name=""></a>
-#  (2018-07-06)
+# [0.8.0](https://github.com/viasite/planfix-toggl-server/compare/0.7.0...0.8.0) (2020-04-19)
+
+
+### Bug Fixes
+
+* manifest для windows приложения ([f2e1b4b](https://github.com/viasite/planfix-toggl-server/commit/f2e1b4b))
+* файлы иконки ([988b9ff](https://github.com/viasite/planfix-toggl-server/commit/988b9ff))
+
+
+### Features
+
+* вывод суммы часов за день ([39bf78c](https://github.com/viasite/planfix-toggl-server/commit/39bf78c))
+* добавлены уведомления ([b6a6a8d](https://github.com/viasite/planfix-toggl-server/commit/b6a6a8d))
 
 
 
-<a name="0.6.2"></a>
+# [0.7.0](https://github.com/viasite/planfix-toggl-server/compare/0.6.4...0.7.0) (2018-08-06)
+
+
+### Features
+
+* иконка в трее ([90ed6d4](https://github.com/viasite/planfix-toggl-server/commit/90ed6d4))
+
+
+
+## [0.6.4](https://github.com/viasite/planfix-toggl-server/compare/0.6.3...0.6.4) (2018-08-06)
+
+
+
+## [0.6.3](https://github.com/viasite/planfix-toggl-server/compare/0.6.2...0.6.3) (2018-08-06)
+
+
+### Bug Fixes
+
+* скрыты DEBUG сообщения при debug: no ([42ccea4](https://github.com/viasite/planfix-toggl-server/commit/42ccea4))
+
+
+
 ## [0.6.2](https://github.com/viasite/planfix-toggl-server/compare/0.6.1...0.6.2) (2018-07-06)
 
 
@@ -13,8 +45,7 @@
 
 
 
-<a name="0.6.1"></a>
-## [0.6.1](https://github.com/viasite/planfix-toggl-server/compare/0.5.1...0.6.1) (2018-06-18)
+## [0.6.1](https://github.com/viasite/planfix-toggl-server/compare/0.6.0...0.6.1) (2018-06-18)
 
 
 ### Bug Fixes
@@ -29,7 +60,6 @@
 
 
 
-<a name="0.6.0"></a>
 # [0.6.0](https://github.com/viasite/planfix-toggl-server/compare/0.5.3...0.6.0) (2018-03-26)
 
 
@@ -45,7 +75,6 @@
 
 
 
-<a name="0.5.3"></a>
 ## [0.5.3](https://github.com/viasite/planfix-toggl-server/compare/0.5.2...0.5.3) (2018-03-15)
 
 
@@ -55,7 +84,6 @@
 
 
 
-<a name="0.5.2"></a>
 ## [0.5.2](https://github.com/viasite/planfix-toggl-server/compare/0.5.0...0.5.2) (2018-03-11)
 
 
@@ -65,7 +93,6 @@
 
 
 
-<a name="0.5.0"></a>
 # [0.5.0](https://github.com/viasite/planfix-toggl-server/compare/0.4.1...0.5.0) (2018-03-11)
 
 
@@ -87,13 +114,7 @@
 * сохранение и загрузка конфига по /api/v1/config ([1471314](https://github.com/viasite/planfix-toggl-server/commit/1471314)), closes [#7](https://github.com/viasite/planfix-toggl-server/issues/7)
 
 
-### BREAKING CHANGES
 
-* урл интерфейса сменился с http://localhost:8096 на https://localhost:8097
-
-
-
-<a name="0.4.1"></a>
 ## [0.4.1](https://github.com/viasite/planfix-toggl-server/compare/0.4.0...0.4.1) (2018-03-04)
 
 
@@ -109,7 +130,6 @@
 
 
 
-<a name="0.4.0"></a>
 # [0.4.0](https://github.com/viasite/planfix-toggl-server/compare/0.3.1...0.4.0) (2018-02-28)
 
 
@@ -125,7 +145,6 @@
 
 
 
-<a name="0.3.1"></a>
 ## [0.3.1](https://github.com/viasite/planfix-toggl-server/compare/0.3.0...0.3.1) (2018-02-27)
 
 
@@ -135,7 +154,6 @@
 
 
 
-<a name="0.3.0"></a>
 # [0.3.0](https://github.com/viasite/planfix-toggl-server/compare/0.2.1...0.3.0) (2018-02-27)
 
 
@@ -151,14 +169,7 @@
 * скрытие консоли при запуске ([0834901](https://github.com/viasite/planfix-toggl-server/commit/0834901)), closes [#1](https://github.com/viasite/planfix-toggl-server/issues/1)
 
 
-### BREAKING CHANGES
 
-* - изменены опции в конфиге: apiToken -> togglApiToken, workspaceId -> togglWorkspaceId
-- planfixAccount больше не имеет значения по умолчанию
-
-
-
-<a name="0.2.1"></a>
 ## [0.2.1](https://github.com/viasite/planfix-toggl-server/compare/0.2.0...0.2.1) (2018-02-21)
 
 
@@ -172,7 +183,6 @@
 
 
 
-<a name="0.2.0"></a>
 # [0.2.0](https://github.com/viasite/planfix-toggl-server/compare/0.1.0...0.2.0) (2018-02-19)
 
 
@@ -189,7 +199,6 @@
 
 
 
-<a name="0.1.0"></a>
 # [0.1.0](https://github.com/viasite/planfix-toggl-server/compare/1cbd9a9...0.1.0) (2018-02-15)
 
 
