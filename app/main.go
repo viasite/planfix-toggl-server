@@ -135,23 +135,25 @@ func initApp() {
 		util.OpenBrowser(fmt.Sprintf("https://localhost:%d", cfg.PortSSL))
 	}
 
-	// tray menu actions
-	for {
-		select {
-		case <-trayMenu["web"].ClickedCh:
-			cfg := config.GetConfig()
-			util.OpenBrowser(fmt.Sprintf("https://localhost:%d", cfg.PortSSL))
+	go func() {
+		// tray menu actions
+		for {
+			select {
+			case <-trayMenu["web"].ClickedCh:
+				cfg := config.GetConfig()
+				util.OpenBrowser(fmt.Sprintf("https://localhost:%d", cfg.PortSSL))
 
-		case <-trayMenu["send"].ClickedCh:
-			err := togglClient.SendToPlanfix()
-			if err != nil {
-				logger.Println(err)
+			case <-trayMenu["send"].ClickedCh:
+				err := togglClient.SendToPlanfix()
+				if err != nil {
+					logger.Println(err)
+				}
+
+			case <-trayMenu["quit"].ClickedCh:
+				onExit()
 			}
-
-		case <-trayMenu["quit"].ClickedCh:
-			onExit()
 		}
-	}
+	}()
 
 	// start API server
 	server := rest.Server{
