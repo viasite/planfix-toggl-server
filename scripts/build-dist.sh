@@ -37,6 +37,11 @@ for os in $oses; do
     dir="build/archives/$os"
     mkdir -p "$dir"
 
+    # windows manifest
+    if [ os = "windows" ]; then
+      cp windows.manifest "$dir/planfix-toggl-server.exe.manifest"
+    fi
+
     # bin
     cp -r build/bin/$os/* "$dir"
 
