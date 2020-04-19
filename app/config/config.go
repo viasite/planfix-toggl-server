@@ -70,7 +70,7 @@ func (c *Config) Validate() (errors []string, isValid bool) {
 		"TogglWorkspaceID",
 	})
 	if err != nil {
-		errors = append(errors, "настройки Toggl неправильные")
+		errors = append(errors, "настройки Toggl неправильные, укажите TogglAPIToken и TogglWorkspaceID")
 	}
 
 	err = c.isGroupInvalid([]string{
