@@ -166,6 +166,7 @@ func initApp() {
 func onReady() {
 	go initApp()
 
+	// systray.EnableAppWindow("Lantern", 1024, 768) // in next systray versions
 	systray.SetIcon(icon.Data)
 	systray.SetTitle("planfix-toggl")
 	systray.SetTooltip("tooltip")

@@ -36,6 +36,7 @@ type TogglClient struct {
 	PlanfixAPI   planfix.API
 	Logger       *log.Logger
 	analiticData PlanfixAnaliticData
+	sentLog		 map[string]int
 }
 
 // PlanfixEntryData - Данные, подмешивающиеся к toggl.DetailedTimeEntry
@@ -73,6 +74,8 @@ type PlanfixAnaliticData struct {
 
 // Run запускает фоновые процессы
 func (c TogglClient) Run() {
+	// init map
+	c.sentLog = make(map[string]int)
 	// start tag cleaner
 	go c.RunTagCleaner()
 	// start sender
@@ -147,9 +150,18 @@ func (c *TogglClient) SendToPlanfix() (err error) {
 	for day, dayEntries := range days {
 		tasks := c.GroupEntriesByTask(dayEntries)
 		minsTotal := 0
+
 		for taskID, entries := range tasks {
 			err, mins := c.sendEntries(taskID, entries)
+
 			minsTotal += mins
+			// add to day time
+			if dayMins, ok := c.sentLog[day]; ok {
+				c.sentLog[day] = dayMins + mins
+			} else {
+				c.sentLog[day] = mins
+			}
+
 			taskURL := fmt.Sprintf("https://%s.planfix.ru/task/%d", c.Config.PlanfixAccount, taskID)
 			if err != nil {
 				c.Logger.Printf("[ERROR] записи к задаче %s (%s) не удалось отправить: %s", taskURL, day, err)
@@ -157,8 +169,9 @@ func (c *TogglClient) SendToPlanfix() (err error) {
 				c.Logger.Printf("[INFO] %d минут отправлены на %s (%s)", mins, taskURL, day)
 			}
 		}
-		c.Logger.Printf("[INFO] минут: %d, задач: %d", minsTotal, len(tasks))
-		c.Notify(fmt.Sprintf("Sent %d minutes to %d tasks", minsTotal, len(tasks)))
+		dayHours := float32(c.sentLog[day]) / 60
+		c.Logger.Printf("[INFO] минут: %d, задач: %d, всего %.1f часов за %s", minsTotal, len(tasks), dayHours, day)
+		c.Notify(fmt.Sprintf("Sent %d minutes to %d tasks\n%.1f hours for %s", minsTotal, len(tasks), dayHours, day))
 	}
 	return nil
 }
