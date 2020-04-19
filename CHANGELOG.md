@@ -1,3 +1,14 @@
+## [0.8.1](https://github.com/viasite/planfix-toggl-server/compare/0.8.0...0.8.1) (2020-04-19)
+
+
+### Bug Fixes
+
+* вывод ошибок в нотификации ([323a32a](https://github.com/viasite/planfix-toggl-server/commit/323a32a))
+* теперь нотификации windows работают на русском ([22dc640](https://github.com/viasite/planfix-toggl-server/commit/22dc640))
+* трей не давал запуститься веб-интерфейсу ([c4dff9f](https://github.com/viasite/planfix-toggl-server/commit/c4dff9f))
+
+
+
 # [0.8.0](https://github.com/viasite/planfix-toggl-server/compare/0.7.0...0.8.0) (2020-04-19)
 
 
