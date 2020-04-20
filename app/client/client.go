@@ -170,6 +170,9 @@ func (c *TogglClient) SendToPlanfix() (err error) {
 		}
 		dayHours := float32(c.SentLog[day]) / 60
 		msg := fmt.Sprintf("минут: %d, задач: %d, всего %.1f часов за %s", minsTotal, len(tasks), dayHours, day)
+		if c.Config.DryRun {
+			msg += " (тестовый режим)"
+		}
 		c.Logger.Printf("[INFO] %s", msg)
 		c.Notify(msg)
 	}
