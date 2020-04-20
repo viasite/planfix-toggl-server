@@ -37,6 +37,7 @@ type TogglClient struct {
 	Logger       *log.Logger
 	analiticData PlanfixAnaliticData
 	SentLog		 map[string]int
+	Opts         map[string]string
 }
 
 // PlanfixEntryData - Данные, подмешивающиеся к toggl.DetailedTimeEntry
@@ -176,6 +177,7 @@ func (c *TogglClient) SendToPlanfix() (err error) {
 		c.Logger.Printf("[INFO] %s", msg)
 		c.Notify(msg)
 	}
+	c.Opts["LastSent"] = time.Now().Format("15:04:05")
 	return nil
 }
 

@@ -5,11 +5,12 @@ import (
 	"io"
 	"log"
 	"os"
+	"time"
 
 	"flag"
+	"github.com/gen2brain/beeep"
 	"github.com/getlantern/systray"
 	"github.com/popstas/go-toggl"
-	"github.com/gen2brain/beeep"
 	"github.com/viasite/planfix-toggl-server/app/client"
 	"github.com/viasite/planfix-toggl-server/app/config"
 	"github.com/viasite/planfix-toggl-server/app/icon"
@@ -125,6 +126,7 @@ func initApp() {
 		Config:  &cfg,
 		Logger:  logger,
 		SentLog: make(map[string]int),
+		Opts:    map[string]string{"LastSent": ""},
 	}
 	togglClient.ReloadConfig()
 
@@ -143,6 +145,16 @@ func initApp() {
 	}
 
 	go func() {
+		for {
+			if togglClient.Opts["LastSent"] != "" {
+				t := togglClient.Opts["LastSent"]
+				trayMenu["send"].SetTitle(fmt.Sprintf("Sync (last at %s)", t))
+			}
+			time.Sleep(time.Duration(60 * time.Second))
+		}
+	}()
+
+	go func() {
 		// tray menu actions
 		for {
 			select {
@@ -152,6 +164,8 @@ func initApp() {
 
 			case <-trayMenu["send"].ClickedCh:
 				err := togglClient.SendToPlanfix()
+				t := togglClient.Opts["LastSent"]
+				trayMenu["send"].SetTitle(fmt.Sprintf("Sync (last at %s)", t))
 				if err != nil {
 					logger.Println(err)
 				}
@@ -178,7 +192,7 @@ func onReady() {
 	// systray.EnableAppWindow("Lantern", 1024, 768) // in next systray versions
 	systray.SetIcon(icon.Data)
 	systray.SetTitle("planfix-toggl")
-	systray.SetTooltip("tooltip")
+	systray.SetTooltip(fmt.Sprintf("planfix-toggl %s", version))
 
 	trayMenu = make(map[string]*systray.MenuItem)
 	trayMenu["web"] = systray.AddMenuItem("Open web interface", "")
