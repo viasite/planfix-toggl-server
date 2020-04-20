@@ -3,6 +3,7 @@ module github.com/viasite/planfix-toggl-server
 go 1.14
 
 require (
+	github.com/gen2brain/beeep v0.0.0-20200420150314-13046a26d502
 	github.com/getlantern/ops v0.0.0-20200403153110-8476b16edcd6 // indirect
 	github.com/getlantern/systray v0.0.0-20200324212034-d3ab4fd25d99
 	github.com/go-chi/chi v4.1.1+incompatible

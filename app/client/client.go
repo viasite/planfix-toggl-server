@@ -2,9 +2,9 @@ package client
 
 import (
 	"fmt"
+	"github.com/gen2brain/beeep"
 	"github.com/popstas/go-toggl"
 	"github.com/popstas/planfix-go/planfix"
-	"github.com/viasite/beeep"
 	"github.com/viasite/planfix-toggl-server/app/config"
 	"io/ioutil"
 	"log"

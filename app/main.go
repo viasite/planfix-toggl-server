@@ -9,7 +9,7 @@ import (
 	"flag"
 	"github.com/getlantern/systray"
 	"github.com/popstas/go-toggl"
-	"github.com/viasite/beeep"
+	"github.com/gen2brain/beeep"
 	"github.com/viasite/planfix-toggl-server/app/client"
 	"github.com/viasite/planfix-toggl-server/app/config"
 	"github.com/viasite/planfix-toggl-server/app/icon"
