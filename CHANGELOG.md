@@ -1,3 +1,14 @@
+## [0.8.2](https://github.com/viasite/planfix-toggl-server/compare/0.8.1...0.8.2) (2020-04-20)
+
+
+### Bug Fixes
+
+* исправлена ошибка вылета программы при второй отправке ([185bc28](https://github.com/viasite/planfix-toggl-server/commit/185bc28))
+* конфиг через веб-интерфейс не сохранялся, если были незаполненные поля ([8116ff8](https://github.com/viasite/planfix-toggl-server/commit/8116ff8))
+* починен вывод в лог файл ([6588f62](https://github.com/viasite/planfix-toggl-server/commit/6588f62))
+
+
+
 ## [0.8.1](https://github.com/viasite/planfix-toggl-server/compare/0.8.0...0.8.1) (2020-04-19)
 
 
