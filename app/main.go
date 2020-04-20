@@ -34,7 +34,7 @@ func getLogger(cfg config.Config) *log.Logger {
 		if err != nil {
 			logger.Fatalf("[ERROR] Failed to open log file: %s", cfg.LogFile)
 		}
-		defer f.Close()
+		//defer f.Close()
 		mw := io.MultiWriter(os.Stdout, f)
 		logger.SetOutput(mw)
 	}
