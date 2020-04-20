@@ -122,8 +122,9 @@ func initApp() {
 	}
 
 	togglClient := client.TogglClient{
-		Config: &cfg,
-		Logger: logger,
+		Config:  &cfg,
+		Logger:  logger,
+		SentLog: make(map[string]int),
 	}
 	togglClient.ReloadConfig()
 
