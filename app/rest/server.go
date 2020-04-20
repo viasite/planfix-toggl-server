@@ -159,9 +159,9 @@ func (s Server) updateConfigCtrl(w http.ResponseWriter, r *http.Request) {
 	}
 
 	errors, _ := newConfig.Validate()
-	if len(errors) == 0 {
-		newConfig.SaveConfig()
-	}
+	//if len(errors) == 0 {
+	newConfig.SaveConfig()
+	//}
 	render.JSON(w, r, errors)
 }
 

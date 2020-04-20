@@ -41,7 +41,7 @@ type TogglUserValidator struct {
 
 func (v TogglUserValidator) Check() (errors []string, ok bool, data interface{}) {
 	user, err := v.TogglClient.GetTogglUser()
-	errors = errorToStrings(err, "Не удалось получить Planfix UserID, проверьте PlanfixAPIKey, PlanfixAPIUrl, PlanfixUserName, PlanfixUserPassword, %s")
+	errors = errorToStrings(err, "%s")
 	return errors, err == nil, user
 }
 
@@ -66,7 +66,7 @@ type PlanfixUserValidator struct {
 
 func (v PlanfixUserValidator) Check() (errors []string, ok bool, data interface{}) {
 	user, err := v.TogglClient.PlanfixAPI.UserGet(0)
-	errors = errorToStrings(err, "Не удалось получить Planfix UserID, проверьте PlanfixAPIKey, PlanfixAPIUrl, PlanfixUserName, PlanfixUserPassword, %s")
+	errors = errorToStrings(err, "%s")
 	return errors, err == nil, user.User
 }
 
