@@ -10,6 +10,7 @@
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
     "release": "conventional-github-releaser -p angular",
     "build-dev": "go build -o planfix-toggl-server.exe github.com/viasite/planfix-toggl-server/app",
+    "build-dev-windows": "go build -ldflags -H=windowsgui -o d:/prog/planfix-toggl/planfix-toggl-server.exe github.com/viasite/planfix-toggl-server/app",
     "build-dist": "bash scripts/build-dist.sh"
   },
   "author": "Stanislav Popov",

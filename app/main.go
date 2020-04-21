@@ -36,7 +36,8 @@ func getLogger(cfg config.Config) *log.Logger {
 			logger.Fatalf("[ERROR] Failed to open log file: %s", cfg.LogFile)
 		}
 		//defer f.Close()
-		mw := io.MultiWriter(os.Stdout, f)
+		// file should be first, when -ldflags -H=windowsgui build, Stdout absent and block log output
+		mw := io.MultiWriter(f, os.Stdout)
 		logger.SetOutput(mw)
 	}
 	return logger
