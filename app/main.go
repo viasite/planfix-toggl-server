@@ -138,12 +138,17 @@ func initApp() {
 		Notify(err.Error())
 	}
 
+	trayMenu["web"].Enable()
+	trayMenu["log"].Enable()
+
 	if isValid {
+		trayMenu["send"].Enable()
 		togglClient.Run()
 	} else {
 		util.OpenBrowser(fmt.Sprintf("https://localhost:%d", cfg.PortSSL))
 	}
 
+	// update last sent on menuitem
 	go func() {
 		for {
 			if togglClient.Opts["LastSent"] != "" {
@@ -158,14 +163,6 @@ func initApp() {
 		// tray menu actions
 		for {
 			select {
-			case <-trayMenu["web"].ClickedCh:
-				cfg := config.GetConfig()
-				util.OpenBrowser(fmt.Sprintf("https://localhost:%d", cfg.PortSSL))
-
-			case <-trayMenu["log"].ClickedCh:
-				cfg := config.GetConfig()
-				systray.ShowAppWindow(fmt.Sprintf("https://localhost:%d/log", cfg.PortSSL))
-
 			case <-trayMenu["send"].ClickedCh:
 				err := togglClient.SendToPlanfix()
 				t := togglClient.Opts["LastSent"]
@@ -173,6 +170,14 @@ func initApp() {
 				if err != nil {
 					logger.Println(err)
 				}
+
+			case <-trayMenu["web"].ClickedCh:
+				cfg := config.GetConfig()
+				util.OpenBrowser(fmt.Sprintf("https://localhost:%d", cfg.PortSSL))
+
+			case <-trayMenu["log"].ClickedCh:
+				cfg := config.GetConfig()
+				systray.ShowAppWindow(fmt.Sprintf("https://localhost:%d/log", cfg.PortSSL))
 
 			case <-trayMenu["quit"].ClickedCh:
 				onExit()
@@ -199,10 +204,14 @@ func onReady() {
 	systray.SetTooltip(fmt.Sprintf("planfix-toggl %s", version))
 
 	trayMenu = make(map[string]*systray.MenuItem)
+	trayMenu["send"] = systray.AddMenuItem("Sync", "")
 	trayMenu["web"] = systray.AddMenuItem("Open web interface", "")
 	trayMenu["log"] = systray.AddMenuItem("Open log", "")
-	trayMenu["send"] = systray.AddMenuItem("Sync", "")
 	trayMenu["quit"] = systray.AddMenuItem("Quit", "Quit the whole app")
+
+	trayMenu["send"].Disable()
+	trayMenu["web"].Disable()
+	trayMenu["log"].Disable()
 }
 
 func onExit() {
