@@ -1,3 +1,19 @@
+## [0.8.3](https://github.com/viasite/planfix-toggl-server/compare/0.8.2...0.8.3) (2020-04-21)
+
+
+### Bug Fixes
+
+* блокировка пунктов меню, пока программа запускается ([129d41c](https://github.com/viasite/planfix-toggl-server/commit/129d41c))
+* сообщение о тестовом режиме (dryRun) ([1fc1606](https://github.com/viasite/planfix-toggl-server/commit/1fc1606))
+
+
+### Features
+
+* дата последней отправки в трее ([f72432e](https://github.com/viasite/planfix-toggl-server/commit/f72432e))
+* просмотр лога в меню программы ([c909abe](https://github.com/viasite/planfix-toggl-server/commit/c909abe))
+
+
+
 ## [0.8.2](https://github.com/viasite/planfix-toggl-server/compare/0.8.1...0.8.2) (2020-04-20)
 
 
