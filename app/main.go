@@ -162,6 +162,10 @@ func initApp() {
 				cfg := config.GetConfig()
 				util.OpenBrowser(fmt.Sprintf("https://localhost:%d", cfg.PortSSL))
 
+			case <-trayMenu["log"].ClickedCh:
+				cfg := config.GetConfig()
+				systray.ShowAppWindow(fmt.Sprintf("https://localhost:%d/log", cfg.PortSSL))
+
 			case <-trayMenu["send"].ClickedCh:
 				err := togglClient.SendToPlanfix()
 				t := togglClient.Opts["LastSent"]
@@ -196,6 +200,7 @@ func onReady() {
 
 	trayMenu = make(map[string]*systray.MenuItem)
 	trayMenu["web"] = systray.AddMenuItem("Open web interface", "")
+	trayMenu["log"] = systray.AddMenuItem("Open log", "")
 	trayMenu["send"] = systray.AddMenuItem("Sync", "")
 	trayMenu["quit"] = systray.AddMenuItem("Quit", "Quit the whole app")
 }
@@ -206,5 +211,6 @@ func onExit() {
 }
 
 func main() {
-	systray.Run(onReady, onExit)
+	//systray.Run(onReady, onExit)
+	systray.RunWithAppWindow("planfix-toggl", 1024, 768, onReady, onExit)
 }

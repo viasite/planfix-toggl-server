@@ -1,8 +1,10 @@
 package rest
 
 import (
+	"bufio"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -78,6 +80,27 @@ func (s Server) Run(portSSL int) {
 
 	router.Get("/robots.txt", func(w http.ResponseWriter, r *http.Request) {
 		render.PlainText(w, r, "User-agent: *\nDisallow: /api/")
+	})
+
+	router.Get("/log", func(w http.ResponseWriter, r *http.Request) {
+		log := ""
+
+		file, err := os.Open(s.TogglClient.Config.LogFile)
+		if err != nil {
+			render.Status(r, 400)
+			render.PlainText(w, r, err.Error())
+		}
+		defer file.Close()
+
+		fileScanner := bufio.NewScanner(file)
+
+		for fileScanner.Scan() {
+			line := fileScanner.Text()
+			line = strings.Replace(line, "[planfix-toggl]", "", -1)
+			log += fmt.Sprintf("%s<br>", line)
+		}
+
+		render.HTML(w, r, log)
 	})
 
 	s.fileServer(router, "/", http.Dir(filepath.Join(".", "docroot")))
