@@ -140,7 +140,7 @@ func initApp() {
 		trayMenu["send"].Enable()
 		togglClient.Run()
 	} else {
-		util.OpenBrowser(fmt.Sprintf("https://localhost:%d", cfg.PortSSL))
+		util.OpenBrowser(fmt.Sprintf("https://localhost:%d/#settings", cfg.PortSSL))
 	}
 
 	// update last sent on menuitem

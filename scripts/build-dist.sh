@@ -59,7 +59,7 @@ for os in $oses; do
 
     # config
     cp config.default.yml "$dir"
-    cp config.dist.yml "$dir/config.yml"
+    # cp config.dist.yml "$dir/config.yml"
 
     # archives at build/dist zip
     pushd "$dir"
