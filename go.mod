@@ -12,10 +12,10 @@ require (
 	github.com/jinzhu/configor v1.1.1
 	github.com/lxn/walk v0.0.0-20191128110447-55ccb3a9f5c1 // indirect
 	github.com/lxn/win v0.0.0-20191128105842-2da648fda5b4 // indirect
-	github.com/popstas/go-toggl v0.0.0-20180326171943-7e188c0fb365
+	github.com/popstas/go-toggl v0.0.0-20200422171723-812cf83b2caa
 	github.com/popstas/planfix-go v0.0.0-20180311230928-d1583856a61c
 	github.com/stretchr/testify v1.3.0
 	github.com/viasite/beeep v0.0.0-20200419222942-c9fdfcbdf5a3
-	golang.org/x/sys v0.0.0-20200413165638-669c56c373c4 // indirect
+	golang.org/x/sys v0.0.0-20200420163511-1957bb5e6d1f // indirect
 	gopkg.in/yaml.v2 v2.2.8
 )
