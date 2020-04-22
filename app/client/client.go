@@ -6,6 +6,7 @@ import (
 	"github.com/popstas/go-toggl"
 	"github.com/popstas/planfix-go/planfix"
 	"github.com/viasite/planfix-toggl-server/app/config"
+	"github.com/viasite/planfix-toggl-server/app/util"
 	"io/ioutil"
 	"log"
 	"math"
@@ -169,13 +170,17 @@ func (c *TogglClient) SendToPlanfix() (err error) {
 				c.Logger.Printf("[INFO] %d минут отправлены на %s (%s)", mins, taskURL, day)
 			}
 		}
-		dayHours := float32(c.SentLog[day]) / 60
-		msg := fmt.Sprintf("минут: %d, задач: %d, всего %.1f часов за %s", minsTotal, len(tasks), dayHours, day)
+		dayHours := int(c.SentLog[day] / 60)
+		dayMins := c.SentLog[day] % 60
+		dayTime := fmt.Sprintf("%dч%02dм", dayHours, dayMins)
+		dayString := strings.ReplaceAll(day, "-", ".")
+
+		msg := fmt.Sprintf("%s, %s, всего %s за %s", util.PluralMins(minsTotal), util.PluralTasks(len(tasks)), dayTime, dayString)
 		if c.Config.DryRun {
 			msg += " (тестовый режим)"
 		}
 		c.Logger.Printf("[INFO] %s", msg)
-		c.Notify(msg)
+		util.Notify(msg)
 	}
 	c.Opts["LastSent"] = time.Now().Format("15:04:05")
 	return nil
