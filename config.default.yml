@@ -21,5 +21,8 @@ planfixApiUrl: https://api.planfix.ru/xml/
 planfixUserName:
 planfixUserPassword:
 
+# other
+dryRun: true
+checkNewVersion: true
 debug: false
 logFile: planfix-toggl.log

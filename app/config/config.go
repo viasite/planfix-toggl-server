@@ -31,6 +31,7 @@ type Config struct {
 	PlanfixAuthorName          string `env:"PLANFIX_AUTHOR_NAME" yaml:"planfixAuthorName"`
 	Debug                      bool   `env:"DEBUG" yaml:"debug"`
 	DryRun                     bool   `env:"DRY_RUN" yaml:"dryRun"`
+	CheckNewVersion            bool   `env:"CHECK_NEW_VERSION" yaml:"checkNewVersion"`
 	PlanfixAPIKey              string `env:"PLANFIX_API_KEY" yaml:"planfixApiKey"`
 	PlanfixAPIUrl              string `env:"PLANFIX_API_URL" yaml:"planfixApiUrl"`
 	PlanfixUserName            string `env:"PLANFIX_USER_NAME" yaml:"planfixUserName"`

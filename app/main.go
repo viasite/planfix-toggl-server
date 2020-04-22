@@ -1,9 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"time"
 
@@ -117,6 +120,10 @@ func initApp() {
 		util.HideConsole()
 	}
 
+	if cfg.CheckNewVersion {
+		checkNewVersion()
+	}
+
 	togglClient := client.TogglClient{
 		Config:  &cfg,
 		Logger:  logger,
@@ -188,6 +195,44 @@ func initApp() {
 		Logger:      logger,
 	}
 	server.Run(cfg.PortSSL)
+}
+
+func checkNewVersion () {
+	if version == "" {
+		return
+	}
+	versionUrl := "https://raw.githubusercontent.com/viasite/planfix-toggl-server/master/package.json"
+	c := http.Client{
+		Timeout: time.Second * 2,
+	}
+	req, err := http.NewRequest(http.MethodGet, versionUrl, nil)
+	if err != nil {
+		return
+	}
+	res, getErr := c.Do(req)
+	if getErr != nil {
+		return
+	}
+
+	body, readErr := ioutil.ReadAll(res.Body)
+	if readErr != nil {
+		log.Fatal(readErr)
+	}
+	/*if body != nil {
+		defer body.Close()
+	}*/
+
+	packageJson := struct {
+		Version string `json:"version"`
+	}{}
+	jsonErr := json.Unmarshal(body, &packageJson)
+	if jsonErr != nil {
+		log.Fatal(jsonErr)
+	}
+
+	if version != packageJson.Version {
+		util.Notify(fmt.Sprintf("Доступна новая версия: %s", packageJson.Version))
+	}
 }
 
 func onReady() {
