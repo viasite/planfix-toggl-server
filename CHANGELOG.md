@@ -1,3 +1,14 @@
+## [0.8.4](https://github.com/viasite/planfix-toggl-server/compare/0.8.3...0.8.4) (2020-04-22)
+
+
+### Bug Fixes
+
+* на windows приложении без консоли не работал лог ([9c0a4cb](https://github.com/viasite/planfix-toggl-server/commit/9c0a4cb))
+* склонения в уведомлениях ([6191ddb](https://github.com/viasite/planfix-toggl-server/commit/6191ddb))
+* теперь удаление тега sent удаляет его и в десктопном приложении ([d817d3d](https://github.com/viasite/planfix-toggl-server/commit/d817d3d))
+
+
+
 ## [0.8.3](https://github.com/viasite/planfix-toggl-server/compare/0.8.2...0.8.3) (2020-04-21)
 
 
