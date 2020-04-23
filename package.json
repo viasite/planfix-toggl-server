@@ -1,6 +1,6 @@
 {
   "name": "planfix-toggl-server",
-  "version": "0.8.4",
+  "version": "0.8.5",
   "description": "Отправка данных из Toggl в Planfix",
   "scripts": {
     "preversion": "node scripts/version-replace-pre.js",

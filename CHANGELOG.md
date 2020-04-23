@@ -1,3 +1,17 @@
+## [0.8.5](https://github.com/viasite/planfix-toggl-server/compare/0.8.4...0.8.5) (2020-04-23)
+
+
+### Bug Fixes
+
+* убраны резервные копии конфига, убран конфиг из дистриба ([c15ea5c](https://github.com/viasite/planfix-toggl-server/commit/c15ea5c))
+
+
+### Features
+
+* проверка новой версии программы ([70bec40](https://github.com/viasite/planfix-toggl-server/commit/70bec40)), closes [#12](https://github.com/viasite/planfix-toggl-server/issues/12)
+
+
+
 ## [0.8.4](https://github.com/viasite/planfix-toggl-server/compare/0.8.3...0.8.4) (2020-04-22)
 
 
