@@ -177,6 +177,10 @@ func initApp() {
 				cfg := config.GetConfig()
 				util.OpenBrowser(fmt.Sprintf("https://localhost:%d", cfg.PortSSL))
 
+			case <-trayMenu["current"].ClickedCh:
+				cfg := config.GetConfig()
+				util.OpenBrowser(fmt.Sprintf("https://localhost:%d/#current-go", cfg.PortSSL))
+
 			case <-trayMenu["log"].ClickedCh:
 				cfg := config.GetConfig()
 				systray.ShowAppWindow(fmt.Sprintf("https://localhost:%d/log", cfg.PortSSL))
@@ -246,6 +250,7 @@ func onReady() {
 	trayMenu = make(map[string]*systray.MenuItem)
 	trayMenu["send"] = systray.AddMenuItem("Sync", "")
 	trayMenu["web"] = systray.AddMenuItem("Open web interface", "")
+	trayMenu["current"] = systray.AddMenuItem("Open current task", "")
 	trayMenu["log"] = systray.AddMenuItem("Open log", "")
 	trayMenu["quit"] = systray.AddMenuItem("Quit", "Quit the whole app")
 
