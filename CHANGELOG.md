@@ -1,3 +1,12 @@
+## [0.8.6](https://github.com/viasite/planfix-toggl-server/compare/0.8.5...0.8.6) (2020-07-31)
+
+
+### Features
+
+* ссылка на текущую задачу, Open current task ([ce98cae](https://github.com/viasite/planfix-toggl-server/commit/ce98cae))
+
+
+
 ## [0.8.5](https://github.com/viasite/planfix-toggl-server/compare/0.8.4...0.8.5) (2020-04-23)
 
 
