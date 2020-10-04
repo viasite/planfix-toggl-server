@@ -65,6 +65,8 @@ github.com/popstas/go-toggl v0.0.0-20180326171943-7e188c0fb365 h1:tFgkC1HbKRBRwu
 github.com/popstas/go-toggl v0.0.0-20180326171943-7e188c0fb365/go.mod h1:jSmabq/wNCsKfbOfUy8fZ5lCDbxwXkwFEAcHcZgRaRI=
 github.com/popstas/go-toggl v0.0.0-20200422171723-812cf83b2caa h1:kM/SFNqDap3RJx1zcqIvh0Cuge3AXLmYlxAxw2dD4ZI=
 github.com/popstas/go-toggl v0.0.0-20200422171723-812cf83b2caa/go.mod h1:jSmabq/wNCsKfbOfUy8fZ5lCDbxwXkwFEAcHcZgRaRI=
+github.com/popstas/go-toggl v0.0.0-20201004162352-bfcd318875b9 h1:EnX/mh+nIXaHqb1bVutg/hUHJHzkGbMbEBwIdGlfERo=
+github.com/popstas/go-toggl v0.0.0-20201004162352-bfcd318875b9/go.mod h1:jSmabq/wNCsKfbOfUy8fZ5lCDbxwXkwFEAcHcZgRaRI=
 github.com/popstas/planfix-go v0.0.0-20180311230928-d1583856a61c h1:hZFT+wZCYrNiH/B+Y3RqE0qHXaUMg2CeNXhIlAhNMYo=
 github.com/popstas/planfix-go v0.0.0-20180311230928-d1583856a61c/go.mod h1:7UIWeOYp6aupEUHVXqUWfUxcv8ImbeXZbV3+C+Buep4=
 github.com/stretchr/objx v0.1.0 h1:4G4v2dO3VZwixGIRoQ5Lfboy6nUhCyYzaqnIAPPhYs4=

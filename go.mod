@@ -12,7 +12,7 @@ require (
 	github.com/jinzhu/configor v1.1.1
 	github.com/lxn/walk v0.0.0-20191128110447-55ccb3a9f5c1 // indirect
 	github.com/lxn/win v0.0.0-20191128105842-2da648fda5b4 // indirect
-	github.com/popstas/go-toggl v0.0.0-20200422171723-812cf83b2caa
+	github.com/popstas/go-toggl v0.0.0-20201004162352-bfcd318875b9
 	github.com/popstas/planfix-go v0.0.0-20180311230928-d1583856a61c
 	github.com/stretchr/testify v1.3.0
 	github.com/viasite/beeep v0.0.0-20200419222942-c9fdfcbdf5a3

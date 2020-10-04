@@ -441,7 +441,7 @@ func (c TogglClient) GetPendingEntries() (entries []TogglPlanfixEntry, err error
 			return entries, err
 		}
 		if len(pageEntries) == 0 {
-			break;
+			break
 		}
 		entries = append(entries, pageEntries...)
 	}
