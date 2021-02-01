@@ -27,7 +27,7 @@
 Установить для [Chrome](https://chrome.google.com/webstore/detail/toggl-button-planfix-edit/hkhchfdjhfegkhkgjongbodaphidfmcl), [Firefox](https://addons.mozilla.org/ru/firefox/addon/toggl-button-planfix/).
 
 #### Видео установки и настройки
-Когда будут проблемы, посмотрите видео с настройкой с нуля: настройка отправки через Planfix API, расширение, создание аналитики - https://www.youtube.com/watch?v=0Ou0FX2Z1L0
+Когда будут проблемы, посмотрите видео с настройкой с нуля: настройка отправки через Planfix API, расширение, создание аналитики - https://www.youtube.com/watch?v=iQZ9lIFkCfM
 
 #### Linux
 На Ubuntu я когда-то проверял, должно работать, Ubuntu у меня есть, могу поправить, если будут пользователи.
