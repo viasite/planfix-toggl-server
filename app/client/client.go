@@ -3,7 +3,6 @@ package client
 import (
 	"fmt"
 	"github.com/gen2brain/beeep"
-	"github.com/popstas/go-toggl"
 	"github.com/popstas/planfix-go/planfix"
 	"github.com/viasite/planfix-toggl-server/app/config"
 	"github.com/viasite/planfix-toggl-server/app/util"
@@ -37,7 +36,7 @@ type TogglClient struct {
 	PlanfixAPI   planfix.API
 	Logger       *log.Logger
 	analiticData PlanfixAnaliticData
-	SentLog		 map[string]int
+	SentLog      map[string]int
 	Opts         map[string]string
 }
 
@@ -270,7 +269,7 @@ func (c TogglClient) getSumEntryName(entries []TogglPlanfixEntry) string {
 func (c TogglClient) GetTogglUser() (account toggl.Account, err error) {
 	account, err = c.Session.GetAccount()
 	if err != nil {
-		return account, fmt.Errorf("Не удалось получить Toggl UserID, проверьте TogglAPIToken, %s", err.Error())
+		return account, fmt.Errorf("GetTogglUser: Не удалось получить Toggl UserID, проверьте TogglAPIToken, %s", err.Error())
 	}
 	return account, nil
 }
@@ -308,21 +307,21 @@ func (c TogglClient) ReportToTogglPlanfixEntry(report toggl.DetailedReport) (ent
 	return entries
 }
 
-func (c TogglClient) togglEntryToTogglDetailedEntry(entry toggl.TimeEntry) toggl.DetailedTimeEntry{
+func (c TogglClient) togglEntryToTogglDetailedEntry(entry toggl.TimeEntry) toggl.DetailedTimeEntry {
 	return toggl.DetailedTimeEntry{
-		ID: entry.ID,
-		Pid: entry.Pid,
-		Tid: entry.Tid,
+		ID:          entry.ID,
+		Pid:         entry.Pid,
+		Tid:         entry.Tid,
 		Description: entry.Description,
-		Start: entry.Start,
-		End: entry.Stop,
-		Tags: entry.Tags,
-		Duration: entry.Duration,
-		Billable: entry.Billable,
+		Start:       entry.Start,
+		End:         entry.Stop,
+		Tags:        entry.Tags,
+		Duration:    entry.Duration,
+		Billable:    entry.Billable,
 	}
 }
 
-func (c TogglClient) togglDetailedEntryToPlanfixTogglEntry(entry toggl.DetailedTimeEntry) (pfe TogglPlanfixEntry){
+func (c TogglClient) togglDetailedEntryToPlanfixTogglEntry(entry toggl.DetailedTimeEntry) (pfe TogglPlanfixEntry) {
 	pfe = TogglPlanfixEntry{
 		DetailedTimeEntry: entry,
 		Planfix: PlanfixEntryData{
