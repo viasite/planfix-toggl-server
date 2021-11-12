@@ -1,3 +1,12 @@
+## [0.8.7](https://github.com/viasite/planfix-toggl-server/compare/0.8.6...0.8.7) (2021-11-12)
+
+
+### Bug Fixes
+
+* typo ([645712a](https://github.com/viasite/planfix-toggl-server/commit/645712a))
+
+
+
 ## [0.8.6](https://github.com/viasite/planfix-toggl-server/compare/0.8.5...0.8.6) (2020-07-31)
 
 
@@ -75,8 +84,8 @@
 
 ### Bug Fixes
 
-* manifest для windows приложения ([f2e1b4b](https://github.com/viasite/planfix-toggl-server/commit/f2e1b4b))
 * файлы иконки ([988b9ff](https://github.com/viasite/planfix-toggl-server/commit/988b9ff))
+* manifest для windows приложения ([f2e1b4b](https://github.com/viasite/planfix-toggl-server/commit/f2e1b4b))
 
 
 ### Features
@@ -179,11 +188,11 @@
 ### Features
 
 * /api/v1/config/reload, подменяет в рантайме все конфиги ([a446b0b](https://github.com/viasite/planfix-toggl-server/commit/a446b0b)), closes [#7](https://github.com/viasite/planfix-toggl-server/issues/7)
-* https, GetEntriesV2, GetEntriesByTag, api /toggl/planfix-task/{taskID}, /toggl/planfix-task/{taskID}/last ([2cff548](https://github.com/viasite/planfix-toggl-server/commit/2cff548))
-* windows icon ([aea1a57](https://github.com/viasite/planfix-toggl-server/commit/aea1a57))
 * открывать веб-интерфейс в случае ошибки, проверяется соответствие toggl workspace id ([0ce06f8](https://github.com/viasite/planfix-toggl-server/commit/0ce06f8)), closes [#7](https://github.com/viasite/planfix-toggl-server/issues/7)
 * проверка конфига на пустые поля ([f9493e0](https://github.com/viasite/planfix-toggl-server/commit/f9493e0))
 * сохранение и загрузка конфига по /api/v1/config ([1471314](https://github.com/viasite/planfix-toggl-server/commit/1471314)), closes [#7](https://github.com/viasite/planfix-toggl-server/issues/7)
+* https, GetEntriesV2, GetEntriesByTag, api /toggl/planfix-task/{taskID}, /toggl/planfix-task/{taskID}/last ([2cff548](https://github.com/viasite/planfix-toggl-server/commit/2cff548))
+* windows icon ([aea1a57](https://github.com/viasite/planfix-toggl-server/commit/aea1a57))
 
 
 
@@ -231,8 +240,8 @@
 
 ### Bug Fixes
 
-* CORS headers ([4aee6f6](https://github.com/viasite/planfix-toggl-server/commit/4aee6f6))
 * конфиг: apiToken -> togglApiToken, workspaceId -> togglWorkspaceId ([4f480d3](https://github.com/viasite/planfix-toggl-server/commit/4f480d3))
+* CORS headers ([4aee6f6](https://github.com/viasite/planfix-toggl-server/commit/4aee6f6))
 
 
 ### Features
